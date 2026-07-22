@@ -12,5 +12,12 @@
     "senha": "Pantanal@26",
     "papel": "admin",
     "polo": null
+  },
+  {
+    "nome": "Rubens",
+    "login": "rubens.ambientalmspantanal",
+    "senha": "rubens@26",
+    "papel": "gestor",
+    "polo": null
   }
 ]
