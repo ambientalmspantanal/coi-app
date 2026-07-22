@@ -1,12 +1,5 @@
 [
   {
-    "nome": "Administrador",
-    "login": "admin",
-    "senha": "admin123",
-    "papel": "admin",
-    "polo": null
-  },
-  {
     "nome": "Valdecir de Lima",
     "login": "valdecir.dlima",
     "senha": "Pantanal@26",
@@ -14,10 +7,17 @@
     "polo": null
   },
   {
-    "nome": "Rubens",
-    "login": "rubens.ambientalmspantanal",
-    "senha": "rubens@26",
+    "nome": "Rubens Calixto de Barros Junior",
+    "login": "rubens.junior",
+    "senha": "Pantanal@26",
     "papel": "gestor",
     "polo": null
+  },
+  {
+    "nome": "Valdecir de Lima",
+    "login": "valdecir.dlima.1",
+    "senha": "Pantanal@26",
+    "papel": "polo",
+    "polo": "TRES LAGOAS"
   }
 ]
