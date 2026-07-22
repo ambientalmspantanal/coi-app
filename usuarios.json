@@ -1,0 +1,16 @@
+[
+  {
+    "nome": "Administrador",
+    "login": "admin",
+    "senha": "admin123",
+    "papel": "admin",
+    "polo": null
+  },
+  {
+    "nome": "Valdecir de Lima",
+    "login": "valdecir.dlima",
+    "senha": "Pantanal@26",
+    "papel": "admin",
+    "polo": null
+  }
+]

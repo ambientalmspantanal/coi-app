@@ -1,0 +1,275 @@
+{
+  "clientes": [
+    {
+      "id_cliente": 1,
+      "nome": "Condomínio Primavera",
+      "municipio": "Campo Grande"
+    },
+    {
+      "id_cliente": 2,
+      "nome": "Hospital Municipal",
+      "municipio": "Dourados"
+    },
+    {
+      "id_cliente": 3,
+      "nome": "Supermercado Compre Bem",
+      "municipio": "Piracicaba"
+    },
+    {
+      "id_cliente": 4,
+      "nome": "Residencial Ipê",
+      "municipio": "Manaus"
+    },
+    {
+      "id_cliente": 5,
+      "nome": "Indústria Metalúrgica Sul",
+      "municipio": "Cariacica"
+    },
+    {
+      "id_cliente": 6,
+      "nome": "Escola Estadual Castro Alves",
+      "municipio": "Campo Grande"
+    },
+    {
+      "id_cliente": 7,
+      "nome": "Chácara Santa Rita",
+      "municipio": "Dourados"
+    }
+  ],
+  "tecnicos": [
+    {
+      "id_tecnico": 1,
+      "nome": "Carlos Souza",
+      "equipe": "Equipe Eletromecânica Alfa",
+      "ativo": true
+    },
+    {
+      "id_tecnico": 2,
+      "nome": "Marcos Lima",
+      "equipe": "Equipe Redes de Água",
+      "ativo": true
+    },
+    {
+      "id_tecnico": 3,
+      "nome": "Felipe Silva",
+      "equipe": "Equipe Esgoto Express",
+      "ativo": true
+    },
+    {
+      "id_tecnico": 4,
+      "nome": "Roberto Costa",
+      "equipe": "Equipe Cavaletes & Hidrômetros",
+      "ativo": true
+    },
+    {
+      "id_tecnico": 5,
+      "nome": "André Santos",
+      "equipe": "Equipe Asfalto & Recomposição",
+      "ativo": true
+    },
+    {
+      "id_tecnico": 6,
+      "nome": "Lucas Mendes",
+      "equipe": "Equipe Eletromecânica Beta",
+      "ativo": false
+    }
+  ],
+  "tiposServico": [
+    {
+      "id_tipo_servico": 1,
+      "nome": "Manutenção Eletromecânica em EEE",
+      "prazo_padrao": 1
+    },
+    {
+      "id_tipo_servico": 2,
+      "nome": "Reparo de Vazamento de Água (Rede)",
+      "prazo_padrao": 2
+    },
+    {
+      "id_tipo_servico": 3,
+      "nome": "Desobstrução de Rede de Esgoto",
+      "prazo_padrao": 1
+    },
+    {
+      "id_tipo_servico": 4,
+      "nome": "Instalação / Troca de Hidrômetro",
+      "prazo_padrao": 3
+    },
+    {
+      "id_tipo_servico": 5,
+      "nome": "Recomposição Asfáltica",
+      "prazo_padrao": 5
+    },
+    {
+      "id_tipo_servico": 6,
+      "nome": "Reparo de Cavalete",
+      "prazo_padrao": 2
+    }
+  ],
+  "os": [
+    {
+      "id_os": 1,
+      "numero_os": "OS-2026-001",
+      "id_cliente": 1,
+      "id_tecnico": 2,
+      "id_tipo_servico": 2,
+      "municipio": "Campo Grande",
+      "prioridade": "Alta",
+      "data_abertura": "2026-07-10T08:00:00Z",
+      "data_prazo": "2026-07-11T08:00:00Z",
+      "data_conclusao": "2026-07-10T17:30:00Z",
+      "status": "Concluída"
+    },
+    {
+      "id_os": 2,
+      "numero_os": "OS-2026-002",
+      "id_cliente": 2,
+      "id_tecnico": 1,
+      "id_tipo_servico": 1,
+      "municipio": "Dourados",
+      "prioridade": "Alta",
+      "data_abertura": "2026-07-12T09:15:00Z",
+      "data_prazo": "2026-07-13T09:15:00Z",
+      "data_conclusao": "2026-07-12T16:00:00Z",
+      "status": "Concluída"
+    },
+    {
+      "id_os": 3,
+      "numero_os": "OS-2026-003",
+      "id_cliente": 3,
+      "id_tecnico": 3,
+      "id_tipo_servico": 3,
+      "municipio": "Piracicaba",
+      "prioridade": "Média",
+      "data_abertura": "2026-07-14T14:20:00Z",
+      "data_prazo": "2026-07-16T14:20:00Z",
+      "data_conclusao": "2026-07-15T10:00:00Z",
+      "status": "Concluída"
+    },
+    {
+      "id_os": 4,
+      "numero_os": "OS-2026-004",
+      "id_cliente": 4,
+      "id_tecnico": 4,
+      "id_tipo_servico": 4,
+      "municipio": "Manaus",
+      "prioridade": "Baixa",
+      "data_abertura": "2026-07-15T11:00:00Z",
+      "data_prazo": "2026-07-18T11:00:00Z",
+      "data_conclusao": null,
+      "status": "Em Andamento"
+    },
+    {
+      "id_os": 5,
+      "numero_os": "OS-2026-005",
+      "id_cliente": 5,
+      "id_tecnico": 5,
+      "id_tipo_servico": 5,
+      "municipio": "Cariacica",
+      "prioridade": "Baixa",
+      "data_abertura": "2026-07-10T10:00:00Z",
+      "data_prazo": "2026-07-15T10:00:00Z",
+      "data_conclusao": null,
+      "status": "Em Andamento"
+    },
+    {
+      "id_os": 6,
+      "numero_os": "OS-2026-006",
+      "id_cliente": 6,
+      "id_tecnico": 2,
+      "id_tipo_servico": 2,
+      "municipio": "Campo Grande",
+      "prioridade": "Alta",
+      "data_abertura": "2026-07-17T07:30:00Z",
+      "data_prazo": "2026-07-18T07:30:00Z",
+      "data_conclusao": null,
+      "status": "Aberta"
+    },
+    {
+      "id_os": 7,
+      "numero_os": "OS-2026-007",
+      "id_cliente": 7,
+      "id_tecnico": 4,
+      "id_tipo_servico": 6,
+      "municipio": "Dourados",
+      "prioridade": "Média",
+      "data_abertura": "2026-07-17T16:00:00Z",
+      "data_prazo": "2026-07-19T16:00:00Z",
+      "data_conclusao": null,
+      "status": "Aberta"
+    },
+    {
+      "id_os": 8,
+      "numero_os": "OS-2026-008",
+      "id_cliente": 1,
+      "id_tecnico": 1,
+      "id_tipo_servico": 1,
+      "municipio": "Campo Grande",
+      "prioridade": "Alta",
+      "data_abertura": "2026-07-16T08:00:00Z",
+      "data_prazo": "2026-07-17T08:00:00Z",
+      "data_conclusao": "2026-07-17T14:00:00Z",
+      "status": "Concluída"
+    },
+    {
+      "id_os": 9,
+      "numero_os": "OS-2026-009",
+      "id_cliente": 3,
+      "id_tecnico": 3,
+      "id_tipo_servico": 3,
+      "municipio": "Piracicaba",
+      "prioridade": "Alta",
+      "data_abertura": "2026-07-05T09:00:00Z",
+      "data_prazo": "2026-07-06T09:00:00Z",
+      "data_conclusao": null,
+      "status": "Em Andamento"
+    },
+    {
+      "id_os": 10,
+      "numero_os": "OS-2026-010",
+      "id_cliente": 5,
+      "id_tecnico": 5,
+      "id_tipo_servico": 5,
+      "municipio": "Cariacica",
+      "prioridade": "Média",
+      "data_abertura": "2026-07-18T00:05:00Z",
+      "data_prazo": "2026-07-20T00:05:00Z",
+      "data_conclusao": null,
+      "status": "Aberta"
+    }
+  ],
+  "historicoStatus": [
+    {
+      "id_historico": 1,
+      "id_os": 1,
+      "status_anterior": "Aberta",
+      "status_novo": "Em Andamento",
+      "data_mudanca": "2026-07-10T09:00:00Z",
+      "responsavel": "Despachante COI"
+    },
+    {
+      "id_historico": 2,
+      "id_os": 1,
+      "status_anterior": "Em Andamento",
+      "status_novo": "Concluída",
+      "data_mudanca": "2026-07-10T17:30:00Z",
+      "responsavel": "Carlos Souza"
+    },
+    {
+      "id_historico": 3,
+      "id_os": 6,
+      "status_anterior": "Criada",
+      "status_novo": "Aberta",
+      "data_mudanca": "2026-07-17T07:30:00Z",
+      "responsavel": "Integração CallCenter"
+    },
+    {
+      "id_historico": 4,
+      "id_os": 9,
+      "status_anterior": "Aberta",
+      "status_novo": "Em Andamento",
+      "data_mudanca": "2026-07-05T10:30:00Z",
+      "responsavel": "Felipe Silva"
+    }
+  ]
+}
