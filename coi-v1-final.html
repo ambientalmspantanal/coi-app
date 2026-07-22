@@ -1435,8 +1435,98 @@ h1, h2, h3, h4, .outfit-font {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ===================== LOGIN / CONTROLE DE ACESSO ===================== */
+#login-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: linear-gradient(135deg, #0a2d47 0%, #0e3a5c 100%);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+#login-overlay.hidden { display: none; }
+.login-box {
+  background: var(--bg-secondary, #fff);
+  border-radius: var(--radius-lg, 12px);
+  padding: 36px 32px;
+  width: 100%; max-width: 360px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  text-align: center;
+}
+.login-box .brand-logo {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: var(--brand-green, #8dc63f); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 18px; margin: 0 auto 12px;
+}
+.login-box h2 { font-size: 16px; color: var(--text-primary); margin-bottom: 4px; }
+.login-box p.sub { font-size: 12px; color: var(--text-muted); margin-bottom: 22px; }
+.login-field { text-align: left; margin-bottom: 14px; }
+.login-field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 5px; }
+.login-field input {
+  width: 100%; padding: 10px 12px; font-size: 14px;
+  border: 1px solid var(--border-color); border-radius: var(--radius-sm, 6px);
+  background: var(--bg-primary); color: var(--text-primary);
+}
+.login-btn {
+  width: 100%; padding: 11px; margin-top: 6px;
+  background: var(--brand-green, #8dc63f); color: #fff; border: none;
+  border-radius: var(--radius-sm, 6px); font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.login-btn:hover { opacity: .92; }
+.login-error {
+  font-size: 12px; color: #dc2626; margin-top: 10px; min-height: 16px;
+}
+.login-hint { font-size: 11px; color: var(--text-muted); margin-top: 18px; line-height: 1.5; }
+
+/* Restrições visuais por papel (aplicadas via classe na <body>) */
+body:not(.role-admin) .admin-only { display: none !important; }
+body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important; }
+
+.session-badge {
+  font-size: 11px; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px;
+}
+.session-badge strong { color: var(--text-primary); display: block; font-size: 12px; }
+.logout-btn {
+  font-size: 11px; color: var(--brand-green, #8dc63f); background: none; border: none;
+  cursor: pointer; padding: 0; text-decoration: underline;
+}
+
+/* Tela Gestão de Usuários */
+.user-form-grid {
+  display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr auto; gap: 12px; align-items: end;
+  margin-bottom: 22px;
+}
+.user-form-grid .filter-group { margin: 0; }
+#usuarios-lista-wrap { overflow-x: auto; }
+.role-tag {
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: #fff;
+}
+.role-tag.admin { background: #0a4f8f; }
+.role-tag.gestor { background: #d4a017; }
+.role-tag.polo { background: #8dc63f; }
 </style></head><body>
 
+  <!-- TELA DE LOGIN — bloqueia o app até autenticar -->
+  <div id="login-overlay">
+    <div class="login-box">
+      <div class="brand-logo">ae</div>
+      <h2>Ambiental MS Pantanal — C.O.I</h2>
+      <p class="sub">Faça login para acessar</p>
+      <form id="login-form">
+        <div class="login-field">
+          <label for="login-user">Usuário</label>
+          <input type="text" id="login-user" autocomplete="username" required>
+        </div>
+        <div class="login-field">
+          <label for="login-pass">Senha</label>
+          <input type="password" id="login-pass" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="login-btn">Entrar</button>
+        <div class="login-error" id="login-error"></div>
+      </form>
+      <div class="login-hint" id="login-loading">Carregando dados de acesso…</div>
+    </div>
+  </div>
 
   <!-- SIDEBAR DE NAVEGAÇÃO (FE-001 / RF-012) -->
   <aside class="sidebar" id="sidebar-nav">
@@ -1481,9 +1571,15 @@ h1, h2, h3, h4, .outfit-font {
             <span class="nav-text">Consulta Operacional</span>
           </a>
         </li>
+        <li class="nav-item gestor-only">
+          <a href="#" class="nav-link" data-tab="usuarios" id="nav-usuarios">
+            <span class="nav-text">Gestão de Usuários</span>
+          </a>
+        </li>
       </ul>
     </nav>
     <div class="sidebar-footer">
+      <div class="session-badge" id="session-badge"><!-- preenchido via JS --></div>
       <div>Operação: AEGEA Saneamento</div>
       <div>V1 Concluída - Ref. 2026</div>
     </div>
@@ -1497,10 +1593,13 @@ h1, h2, h3, h4, .outfit-font {
       <div class="page-title">
         <h1 id="main-title">Ambiental MS Pantanal - C.O.I</h1>
       </div>
-      <div class="import-control">
+      <div class="import-control admin-only">
         <label class="import-btn" for="import-file-input">Importar Planilha</label>
         <input type="file" id="import-file-input" accept=".xlsx,.xls" multiple hidden>
         <span class="import-status" id="import-status">Nenhum arquivo importado</span>
+      </div>
+      <div class="import-control admin-only">
+        <button type="button" class="import-btn" id="publicar-dados-btn" style="background-color: var(--brand-navy);">⬇ Baixar dados.json</button>
       </div>
       <div class="filter-bar">
         <div class="filter-group">
@@ -2064,6 +2163,58 @@ h1, h2, h3, h4, .outfit-font {
         Tempos médios calculados sobre a amostra de OS concluídas na base atual — amostra pequena (27 OS ao todo), valores podem não ser estatisticamente representativos ainda.
         Não inclui o indicador IEM/Extravasamento — depende da base de Ligações Ativas de Esgoto, ainda não recebida.
       </p>
+    </section>
+
+    <!-- TELA: GESTÃO DE USUÁRIOS (Admin / Gestor) -->
+    <section class="page-container" id="usuarios-page">
+      <h2 style="font-size: 18px; color: var(--text-primary); margin-bottom: 6px;">Gestão de Usuários</h2>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">
+        Crie os logins de acesso. Depois de adicionar ou remover alguém, clique em
+        <strong>"Baixar usuarios.json"</strong> e envie o arquivo para o Administrador publicar no GitHub —
+        só assim a mudança passa a valer para todo mundo.
+      </p>
+
+      <div class="table-card" style="padding: 20px; margin-bottom: 20px;">
+        <div class="user-form-grid">
+          <div class="filter-group">
+            <label class="filter-label" for="user-nome">Nome</label>
+            <input type="text" class="search-input" id="user-nome" placeholder="Nome completo">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label" for="user-login">Usuário (login)</label>
+            <input type="text" class="search-input" id="user-login" placeholder="ex: joao.silva">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label" for="user-senha">Senha</label>
+            <input type="text" class="search-input" id="user-senha" placeholder="senha de acesso">
+          </div>
+          <div class="filter-group">
+            <label class="filter-label" for="user-papel">Papel</label>
+            <select class="filter-select" id="user-papel" style="width:100%;">
+              <option value="polo">Usuário de Pólo</option>
+              <option value="gestor">Gestor</option>
+              <option value="admin" class="admin-only-option">Administrador</option>
+            </select>
+          </div>
+          <div class="filter-group" id="user-polo-wrap">
+            <label class="filter-label" for="user-polo">Pólo</label>
+            <select class="filter-select" id="user-polo" style="width:100%;"></select>
+          </div>
+          <button type="button" class="import-btn" id="user-add-btn">+ Adicionar</button>
+        </div>
+
+        <div id="usuarios-lista-wrap">
+          <table class="coi-table">
+            <thead>
+              <tr><th>Nome</th><th>Usuário</th><th>Papel</th><th>Pólo</th><th></th></tr>
+            </thead>
+            <tbody id="usuarios-tabela-body"><!-- preenchido via JS --></tbody>
+          </table>
+        </div>
+      </div>
+
+      <button type="button" class="import-btn" id="baixar-usuarios-btn" style="background-color: var(--brand-navy);">⬇ Baixar usuarios.json</button>
+      <span class="import-status" id="usuarios-status" style="margin-left:10px;"></span>
     </section>
 
   </main>
@@ -5149,5 +5300,194 @@ function _doExport(){
     });
   }
 });
+</script>
+
+<!-- ===================== LOGIN / CONTROLE DE ACESSO POR PERFIL ===================== -->
+<script>
+(function () {
+  const DATA_URL = "./dados.json";
+  const USERS_URL = "./usuarios.json";
+
+  // Login/senha padrão usados SÓ enquanto não existir um usuarios.json publicado no GitHub.
+  // Troque assim que possível: faça login com esse usuário, cadastre o seu de verdade em
+  // "Gestão de Usuários", baixe o usuarios.json e publique — o padrão deixa de valer.
+  const DEFAULT_USERS = [
+    { nome: "Administrador", login: "admin", senha: "admin123", papel: "admin", polo: null }
+  ];
+
+  let usersList = null;
+  let sessionInfo = null;
+
+  function normalize(s) { return String(s || "").trim().toLowerCase(); }
+
+  async function fetchJSON(url) {
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function downloadJSON(filename, dataObj) {
+    const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function applyPoloFilter(db, session) {
+    if (!db) return db;
+    if (!session || session.papel !== "polo") return db;
+    return { ...db, os: (db.os || []).filter(o => o.polo === session.polo) };
+  }
+
+  function refreshData(session) {
+    // window.COIDatabaseFull = dados reais, sem filtro. window.COIDatabase = a "visão"
+    // (já filtrada por pólo, se for o caso) que o resto do app usa para renderizar.
+    if (!window.COIDatabaseFull && window.COIDatabase) {
+      window.COIDatabaseFull = window.COIDatabase;
+    }
+    if (window.COIDatabaseFull) {
+      window.COIDatabase = applyPoloFilter(window.COIDatabaseFull, session);
+    }
+    if (typeof window.popularFiltros === "function") window.popularFiltros();
+    if (typeof window.renderAll === "function") window.renderAll();
+  }
+
+  function renderSessionBadge() {
+    const el = document.getElementById("session-badge");
+    if (!el || !sessionInfo) return;
+    const papelLabel = { admin: "Administrador", gestor: "Gestor", polo: `Pólo: ${sessionInfo.polo || "-"}` }[sessionInfo.papel] || sessionInfo.papel;
+    el.innerHTML = `<strong>${sessionInfo.nome}</strong>${papelLabel} · <button type="button" class="logout-btn" id="logout-btn">Sair</button>`;
+    document.getElementById("logout-btn")?.addEventListener("click", () => window.location.reload());
+  }
+
+  function populatePoloSelect() {
+    const sel = document.getElementById("user-polo");
+    if (!sel) return;
+    const polos = new Set();
+    (window.COIDatabaseFull?.os || []).forEach(os => {
+      if (os.polo && os.polo !== "#N/A") polos.add(String(os.polo).trim());
+    });
+    sel.innerHTML = Array.from(polos).sort().map(p => `<option value="${p}">${p}</option>`).join("") || `<option value="">(sem pólos na base ainda)</option>`;
+  }
+
+  function toggleUserPoloWrap() {
+    const papel = document.getElementById("user-papel")?.value;
+    const wrap = document.getElementById("user-polo-wrap");
+    if (wrap) wrap.style.display = papel === "polo" ? "" : "none";
+  }
+
+  function renderUsersTable() {
+    const tbody = document.getElementById("usuarios-tabela-body");
+    if (!tbody) return;
+    if (!usersList || usersList.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">Nenhum usuário cadastrado.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = usersList.map((u, i) => {
+      const podeExcluir = sessionInfo.papel === "admin" || (sessionInfo.papel === "gestor" && u.papel !== "admin");
+      const isSelf = normalize(u.login) === normalize(sessionInfo.login);
+      const btn = (podeExcluir && !isSelf)
+        ? `<button type="button" class="logout-btn" data-del-idx="${i}" style="color:#dc2626;">Remover</button>`
+        : "";
+      const papelTxt = u.papel === "admin" ? "Admin" : u.papel === "gestor" ? "Gestor" : "Pólo";
+      return `<tr>
+        <td>${u.nome}</td>
+        <td>${u.login}</td>
+        <td><span class="role-tag ${u.papel}">${papelTxt}</span></td>
+        <td>${u.polo || "-"}</td>
+        <td>${btn}</td>
+      </tr>`;
+    }).join("");
+    tbody.querySelectorAll("[data-del-idx]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.getAttribute("data-del-idx"), 10);
+        if (confirm(`Remover o acesso de "${usersList[idx].nome}"?`)) {
+          usersList.splice(idx, 1);
+          renderUsersTable();
+          const st = document.getElementById("usuarios-status");
+          if (st) st.textContent = "Alterado — baixe e publique o usuarios.json para valer para todos.";
+        }
+      });
+    });
+  }
+
+  function initUsersPage() {
+    const papelSelect = document.getElementById("user-papel");
+    papelSelect?.addEventListener("change", toggleUserPoloWrap);
+    toggleUserPoloWrap();
+    if (sessionInfo.papel !== "admin") {
+      papelSelect?.querySelector(".admin-only-option")?.remove();
+    }
+    populatePoloSelect();
+
+    document.getElementById("user-add-btn")?.addEventListener("click", () => {
+      const nome = document.getElementById("user-nome").value.trim();
+      const login = document.getElementById("user-login").value.trim();
+      const senha = document.getElementById("user-senha").value.trim();
+      const papel = document.getElementById("user-papel").value;
+      const polo = document.getElementById("user-polo").value;
+      const statusEl = document.getElementById("usuarios-status");
+      if (!nome || !login || !senha) { statusEl.textContent = "Preencha nome, usuário e senha."; return; }
+      if (papel === "polo" && !polo) { statusEl.textContent = "Selecione o pólo."; return; }
+      if (usersList.some(u => normalize(u.login) === normalize(login))) { statusEl.textContent = "Já existe um usuário com esse login."; return; }
+      usersList.push({ nome, login, senha, papel, polo: papel === "polo" ? polo : null });
+      document.getElementById("user-nome").value = "";
+      document.getElementById("user-login").value = "";
+      document.getElementById("user-senha").value = "";
+      renderUsersTable();
+      statusEl.textContent = "Adicionado — baixe e publique o usuarios.json para valer para todos.";
+    });
+
+    document.getElementById("baixar-usuarios-btn")?.addEventListener("click", () => {
+      downloadJSON("usuarios.json", usersList);
+    });
+
+    document.getElementById("publicar-dados-btn")?.addEventListener("click", () => {
+      downloadJSON("dados.json", window.COIDatabase || {});
+    });
+
+    renderUsersTable();
+  }
+
+  function applyRoleUI() {
+    document.body.classList.remove("role-admin", "role-gestor", "role-polo");
+    document.body.classList.add(`role-${sessionInfo.papel}`);
+  }
+
+  function onLoginSuccess(user) {
+    sessionInfo = { nome: user.nome, login: user.login, papel: user.papel, polo: user.polo || null };
+    document.getElementById("login-overlay").classList.add("hidden");
+    applyRoleUI();
+    renderSessionBadge();
+    refreshData(sessionInfo);
+    initUsersPage();
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const loadingEl = document.getElementById("login-loading");
+    const [loadedUsers, dadosRemotos] = await Promise.all([fetchJSON(USERS_URL), fetchJSON(DATA_URL)]);
+    usersList = Array.isArray(loadedUsers) && loadedUsers.length > 0 ? loadedUsers : DEFAULT_USERS.slice();
+    if (dadosRemotos) window.COIDatabaseFull = dadosRemotos;
+    if (loadingEl) loadingEl.textContent = "";
+
+    const form = document.getElementById("login-form");
+    const errorEl = document.getElementById("login-error");
+    form?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const login = document.getElementById("login-user").value.trim();
+      const senha = document.getElementById("login-pass").value;
+      const found = usersList.find(u => normalize(u.login) === normalize(login) && u.senha === senha);
+      if (!found) { errorEl.textContent = "Usuário ou senha inválidos."; return; }
+      errorEl.textContent = "";
+      onLoginSuccess(found);
+    });
+  });
+})();
 </script>
 </body></html>
