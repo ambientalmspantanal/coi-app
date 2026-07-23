@@ -5580,11 +5580,12 @@ function _doExport(){
           senha: senha || atual.senha,
           papel, polo: papel === "polo" ? polo : null
         };
-        statusEl.textContent = "Editado — baixe e publique o usuarios.json para valer para todos.";
+        statusEl.textContent = "Editado — clique em 🚀 Publicar usuários no site.";
       } else {
         usersList.push({ nome, login, senha, papel, polo: papel === "polo" ? polo : null });
-        statusEl.textContent = "Adicionado — baixe e publique o usuarios.json para valer para todos.";
+        statusEl.textContent = "Adicionado — clique em 🚀 Publicar usuários no site.";
       }
+      window.COIUsersList = usersList; // Exposto para publish.js
       resetUserForm();
       renderUsersTable();
     });
@@ -5634,6 +5635,7 @@ function _doExport(){
     const loadingEl = document.getElementById("login-loading");
     const [loadedUsers, dadosRemotos] = await Promise.all([fetchJSON(USERS_URL), fetchJSON(DATA_URL)]);
     usersList = Array.isArray(loadedUsers) && loadedUsers.length > 0 ? loadedUsers : DEFAULT_USERS.slice();
+    window.COIUsersList = usersList; // Exposto para publish.js
     if (dadosRemotos) window.COIDatabaseFull = dadosRemotos;
     if (loadingEl) loadingEl.textContent = "";
 

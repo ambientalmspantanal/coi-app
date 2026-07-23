@@ -161,6 +161,59 @@
     if (novo) atualizarStatus("Configuração salva.", "ok");
   }
 
+  // Publica a lista de usuários (usuarios.json) usando o mesmo token/repo.
+  // A lista é lida de window.COIUsersList (expõe do fluxo de Gestão de Usuários)
+  // ou aceita como argumento direto — o botão injetado abaixo usa a global.
+  async function publicarUsuarios(listaOpcional) {
+    let cfg = carregarCfg();
+    if (!cfg) {
+      cfg = pedirConfig(null);
+      if (!cfg) return;
+    }
+    const lista = listaOpcional || window.COIUsersList;
+    if (!Array.isArray(lista) || lista.length === 0) {
+      alert("Nenhum usuário para publicar — cadastre pelo menos 1 antes.");
+      return;
+    }
+
+    const btn = document.getElementById("btn-publicar-usuarios");
+    const textoOriginal = btn ? btn.textContent : "";
+    if (btn) { btn.disabled = true; btn.textContent = "Publicando..."; }
+
+    try {
+      const cfgUsuarios = { ...cfg, path: "usuarios.json" };
+      const sha = await getShaAtual(cfgUsuarios);
+      const payload = JSON.stringify(lista, null, 2);
+      const body = {
+        message: `Atualização automática de usuários — ${new Date().toLocaleString("pt-BR")} (${lista.length} usuário${lista.length === 1 ? "" : "s"})`,
+        content: bytesEmBase64(payload),
+        branch: cfg.branch,
+      };
+      if (sha) body.sha = sha;
+
+      const url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/usuarios.json`;
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${cfg.token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`GitHub PUT ${res.status}: ${txt.slice(0, 300)}`);
+      }
+      alert(`✅ Usuários publicados! GitHub Pages atualiza em ~30s.`);
+    } catch (err) {
+      console.error(err);
+      alert(`❌ Falha ao publicar usuários: ${String(err.message || err).slice(0, 200)}`);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = textoOriginal || "🚀 Publicar usuários no site"; }
+    }
+  }
+
   function atualizarStatus(texto, tipo) {
     const el = document.getElementById("publish-status");
     if (!el) return;
@@ -199,7 +252,45 @@
     importDiv.appendChild(status);
   }
 
-  document.addEventListener("DOMContentLoaded", injetarBotao);
+  // Injeta o botão "🚀 Publicar usuários no site" ao lado do
+  // "⬇ Baixar usuarios.json" na tela de Gestão de Usuários.
+  // Fica invisível até o usuário abrir essa tela pela 1ª vez.
+  function tentarInjetarBotaoUsuarios() {
+    const baixarBtn = document.getElementById("baixar-usuarios-btn");
+    if (!baixarBtn || document.getElementById("btn-publicar-usuarios")) return;
 
-  window.COIPublish = { publicar, reconfigurar, limparCfg };
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.id = "btn-publicar-usuarios";
+    btn.className = "import-btn";
+    btn.textContent = "🚀 Publicar usuários no site";
+    btn.style.marginLeft = "8px";
+    btn.style.backgroundColor = "var(--brand-green, #10b981)";
+    btn.style.color = "#fff";
+    btn.addEventListener("click", () => publicarUsuarios());
+
+    baixarBtn.parentNode.insertBefore(btn, baixarBtn.nextSibling);
+  }
+
+  // Como a tela de Gestão de Usuários pode renderizar após o load,
+  // observa o DOM até o botão de baixar aparecer, e aí injeta o de publicar.
+  function observarUsuariosTela() {
+    if (document.getElementById("baixar-usuarios-btn")) {
+      tentarInjetarBotaoUsuarios();
+      return;
+    }
+    const obs = new MutationObserver(() => {
+      if (document.getElementById("baixar-usuarios-btn")) {
+        tentarInjetarBotaoUsuarios();
+      }
+    });
+    obs.observe(document.body, { childList: true, subtree: true });
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    injetarBotao();
+    observarUsuariosTela();
+  });
+
+  window.COIPublish = { publicar, publicarUsuarios, reconfigurar, limparCfg };
 })();
