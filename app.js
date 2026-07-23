@@ -44,17 +44,86 @@ document.addEventListener("DOMContentLoaded", () => {
     5370                        // Fiscalização Coleta Mensal
   ]);
 
+  // ─── Regras contratuais de prazo por código de serviço ────────────────────────
+  // Fonte: tabela oficial de códigos SIGIS + Tabela 8 do 4º Termo Aditivo.
+  // Ligação Esgoto = 10 dias úteis · Desobstrução = 24h corridas · Reposição = 5
+  // dias úteis (7 em Três Lagoas, Ponta Porã, Douradina, Fátima do Sul).
+  // Códigos sem prazo formal (retorno, limpeza de PV) ficam como "sem SLA".
+  const CODIGOS_LIGACAO_SLA = new Set([14110,14114,14115,14170,14210,14320,14410,14420,14510,14520,14610,14620,14710,14721,14810,14820,15010,15020]);
+  const CODIGOS_DESOBSTRUCAO_SLA = new Set([43000,43001,43002,43100,61400,61600]);
+  const CODIGOS_REPOSICAO_SLA = new Set([99550,99551,99552,99553,99554,99555,99556,99557]);
+  const CODIGOS_SEM_PRAZO_FORMAL = new Set([44291, 60700, 61800]);
+  const PRAZO_LIGACAO_UTEIS = 10;
+  const PRAZO_DESOBSTRUCAO_HORAS = 24;
+  const PRAZO_REPOSICAO_UTEIS_PADRAO = 5;
+  const PRAZO_REPOSICAO_UTEIS_EXCECAO = 7;
+  const CIDADES_REPOSICAO_7D = new Set([
+    "TRES LAGOAS", "TRÊS LAGOAS",
+    "PONTA PORA", "PONTA PORÃ",
+    "DOURADINA",
+    "FATIMA DO SUL", "FÁTIMA DO SUL",
+  ]);
+
+  function normalizarCidade(txt) { return (txt || "").toString().trim().toUpperCase(); }
+
+  // Adiciona N dias úteis (seg-sex) a uma data.
+  function addDiasUteis(base, dias) {
+    const d = new Date(base);
+    let adicionados = 0;
+    while (adicionados < dias) {
+      d.setDate(d.getDate() + 1);
+      const dow = d.getDay();
+      if (dow !== 0 && dow !== 6) adicionados++;
+    }
+    return d;
+  }
+
+  // { prazo: Date|null, semSla: boolean } baseado no código do serviço e cidade.
+  function calcularPrazoContratual(os) {
+    if (!os || !os.data_abertura) return { prazo: null, semSla: true };
+    const codigo = Number(os.id_tipo_servico);
+    const abertura = new Date(os.data_abertura);
+    if (isNaN(abertura.getTime())) return { prazo: null, semSla: true };
+
+    if (CODIGOS_SEM_PRAZO_FORMAL.has(codigo)) return { prazo: null, semSla: true };
+    if (CODIGOS_LIGACAO_SLA.has(codigo)) return { prazo: addDiasUteis(abertura, PRAZO_LIGACAO_UTEIS), semSla: false };
+    if (CODIGOS_DESOBSTRUCAO_SLA.has(codigo)) return { prazo: new Date(abertura.getTime() + PRAZO_DESOBSTRUCAO_HORAS * 3600 * 1000), semSla: false };
+    if (CODIGOS_REPOSICAO_SLA.has(codigo)) {
+      const cidade = normalizarCidade(os.municipio);
+      const diasUteis = CIDADES_REPOSICAO_7D.has(cidade) ? PRAZO_REPOSICAO_UTEIS_EXCECAO : PRAZO_REPOSICAO_UTEIS_PADRAO;
+      return { prazo: addDiasUteis(abertura, diasUteis), semSla: false };
+    }
+    return { prazo: null, semSla: true };
+  }
+
+  // Prazo efetivo p/ SLA: 1) contratual (código+cidade), 2) data_prazo_programada, 3) data_prazo.
+  function obterDataPrazoEfetiva(os) {
+    const contratual = calcularPrazoContratual(os);
+    if (contratual.prazo) return contratual.prazo;
+    if (os && os.data_prazo_programada) return new Date(os.data_prazo_programada);
+    if (os && os.data_prazo) return new Date(os.data_prazo);
+    return null;
+  }
+
+  // ─── Helper de mês de referência (YYYY-MM) ────────────────────────────────────
+  function chaveMes(dt) {
+    if (!dt) return null;
+    const d = dt instanceof Date ? dt : new Date(dt);
+    if (isNaN(d.getTime())) return null;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  }
+
   // Uma OS é considerada "Atrasada" quando:
   // 1. Não está Concluída nem Cancelada
   // 2. O serviço NÃO está na lista de exclusão
-  // 3. A Data Exec Prog Emp (prazo programado pela empresa) já passou
+  // 3. Passou do prazo efetivo (contratual > data_prazo_programada > data_prazo)
   // Regra definida por Valdecir — mesma lógica usada no Excel para gerar
   // o relatório de atrasadas da operação.
   function isAtrasadaReal(os) {
     if (os.status === "Concluída" || os.status === "Cancelada") return false;
     if (CODIGOS_EXCLUIR_ATRASADAS.has(os.id_tipo_servico)) return false;
-    if (!os.data_prazo_programada && !os.data_prazo) return false;
-    const prazo = new Date(os.data_prazo_programada || os.data_prazo);
+    const prazo = obterDataPrazoEfetiva(os);
+    if (!prazo) return false;
     return state.currentSystemTime > prazo;
   }
 
@@ -355,44 +424,40 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // 4. Regras de SLA e Backlog (BE-002, BE-004)
+  // Prioriza o prazo contratual recalculado (código do serviço + cidade)
+  // sobre data_prazo_programada e data_prazo importados — os campos da
+  // planilha estavam desatualizados frente à Tabela 8 do 4º Termo Aditivo.
   function calculateSLADetails(os) {
-    if ("status_prazo_origem" in os) {
-      if (os.status_prazo_origem === "ATRASADO") {
-        return { vencida: true, concluidaNoPrazo: false, semSlaFormal: false };
-      }
-      if (os.status_prazo_origem === "NO PRAZO") {
-        return { vencida: false, concluidaNoPrazo: true, semSlaFormal: false };
-      }
-      // "OUTRO SLA" / vazio: usa Data Exec Prog Emp como prazo (regra SIGIS).
-      const prazoRef = os.data_prazo_programada
-        ? new Date(os.data_prazo_programada)
-        : (os.data_prazo ? new Date(os.data_prazo) : null);
+    const contratual = calcularPrazoContratual(os);
 
-      if (!prazoRef) {
-        return { vencida: false, concluidaNoPrazo: true, semSlaFormal: true };
-      }
-      if (os.status === "Concluída") {
-        const dtConc = os.data_conclusao ? new Date(os.data_conclusao) : null;
-        const concluidaNoPrazo = dtConc
-          ? dtConc.toISOString().slice(0, 10) <= prazoRef.toISOString().slice(0, 10)
-          : true;
-        return { vencida: false, concluidaNoPrazo, semSlaFormal: true };
-      }
-      const vencida = state.currentSystemTime > prazoRef;
-      return { vencida, concluidaNoPrazo: true, semSlaFormal: true };
+    // Serviços sem SLA formal (retorno, limpeza PV): não penalizam ninguém.
+    if (contratual.semSla && !CODIGOS_LIGACAO_SLA.has(Number(os.id_tipo_servico))
+        && !CODIGOS_DESOBSTRUCAO_SLA.has(Number(os.id_tipo_servico))
+        && !CODIGOS_REPOSICAO_SLA.has(Number(os.id_tipo_servico))) {
+      // Só cai aqui se o código NÃO estiver em nenhuma categoria contratual.
+      // Aí ainda tenta usar a fonte da planilha como fallback abaixo.
+    }
+    if (CODIGOS_SEM_PRAZO_FORMAL.has(Number(os.id_tipo_servico))) {
+      return { vencida: false, concluidaNoPrazo: true, semSlaFormal: true };
     }
 
-    // Fallback: dados de demonstração (database.js)
-    const dataPrazo = new Date(os.data_prazo);
-    const dataConclusao = os.data_conclusao ? new Date(os.data_conclusao) : null;
-    let vencida = false;
-    let concluidaNoPrazo = true;
-    if (dataConclusao) {
-      concluidaNoPrazo = dataConclusao <= dataPrazo;
-    } else {
-      vencida = state.currentSystemTime > dataPrazo;
+    const prazoRef = contratual.prazo
+      || (os.data_prazo_programada ? new Date(os.data_prazo_programada) : null)
+      || (os.data_prazo ? new Date(os.data_prazo) : null);
+
+    if (!prazoRef) {
+      return { vencida: false, concluidaNoPrazo: true, semSlaFormal: true };
     }
-    return { vencida, concluidaNoPrazo, semSlaFormal: false };
+    if (os.status === "Concluída") {
+      const dtConc = os.data_conclusao ? new Date(os.data_conclusao) : null;
+      const concluidaNoPrazo = dtConc ? dtConc <= prazoRef : true;
+      return { vencida: false, concluidaNoPrazo, semSlaFormal: false };
+    }
+    if (os.status === "Cancelada") {
+      return { vencida: false, concluidaNoPrazo: true, semSlaFormal: false };
+    }
+    const vencida = state.currentSystemTime > prazoRef;
+    return { vencida, concluidaNoPrazo: true, semSlaFormal: false };
   }
 
   // 5. Renderização Centralizada
@@ -1873,36 +1938,25 @@ function _doExport(){
       if (gv) { gv.textContent = "—"; gv.style.color = "var(--text-muted)"; }
       return;
     }
-    const allOS = window.COIDatabase.os;
-    const now = state.currentSystemTime;
+    // Regra de apuração contratual: IEA reflete só o MÊS CORRENTE.
+    // Considera OS abertas (data_abertura) no mês da data de referência do sistema.
+    const mesRef = chaveMes(state.currentSystemTime);
+    const allOS = window.COIDatabase.os.filter(os => chaveMes(os.data_abertura) === mesRef);
     const X = 0.95;
 
     let baixadas = 0, qa = 0, pendVencidas = 0, pendNoPrazo = 0;
 
     allOS.forEach(os => {
-      const spo = (os.status_prazo_origem || "").trim().toUpperCase();
-      const prazoRef = os.data_prazo_programada
-        ? new Date(os.data_prazo_programada)
-        : (os.data_prazo ? new Date(os.data_prazo) : null);
+      const { vencida, concluidaNoPrazo, semSlaFormal } = calculateSLADetails(os);
 
       if (os.status === "Concluída") {
         baixadas++;
-        if (spo === "ATRASADO") {
-          // fora do prazo — não conta QA
-        } else if (spo === "NO PRAZO") {
-          qa++;
-        } else {
-          // OUTRO SLA / vazio: compara data de conclusão com prazo programado
-          if (prazoRef && os.data_conclusao) {
-            const dtConc = new Date(os.data_conclusao);
-            if (dtConc <= prazoRef) qa++;
-          } else {
-            qa++; // sem data de prazo: assume no prazo
-          }
-        }
+        // Concluídas com SLA formal seguem calculateSLADetails.
+        // Serviços "sem SLA formal" (retorno, limpeza PV) contam como no prazo.
+        if (concluidaNoPrazo || semSlaFormal) qa++;
       } else if (os.status !== "Cancelada") {
-        // Pendentes: usa a mesma regra da tela OS Atrasadas
-        // (exclui serviços fora do IEA, como fiscalização/pesquisa)
+        // Pendentes: mesma regra da tela OS Atrasadas
+        // (exclui serviços fora do IEA como fiscalização/pesquisa)
         if (isAtrasadaReal(os)) {
           pendVencidas++;
         } else {
