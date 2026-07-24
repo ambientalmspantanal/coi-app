@@ -3121,6 +3121,14 @@ document.addEventListener("DOMContentLoaded", () => {
     ...CODIGOS_REPOSICAO_SLA,
     ...CODIGOS_SEM_PRAZO_FORMAL,
   ]);
+
+  // Situações que NÃO entram no cálculo do IEA — OS ainda não em produção.
+  // "Agendada" e "Gerada" ficam fora do QT/QA (regra SIGIS confirmada pelo
+  // Valdecir em 2026-07-24: só entra o que a Ambiental já efetivou).
+  function situacaoNaoContaIEA(os) {
+    const s = (os.situacao_original || os.status || "").toString().toLowerCase();
+    return s.includes("agendad") || s.includes("gerad") || s.includes("emitid") || s.includes("emissao");
+  }
   const PRAZO_LIGACAO_UTEIS = 10;
   const PRAZO_DESOBSTRUCAO_HORAS = 24;
   const PRAZO_REPOSICAO_UTEIS_PADRAO = 5;
@@ -4491,21 +4499,15 @@ function _doExport(){
     if (!qtEl || !window.COIDatabase) return;
 
     const X = 0.95;
-    // Apuração contratual (SIGIS): só os 35 códigos elegíveis.
-    // - QT: OS emitidas (data_abertura) no mês corrente
-    // - Baixadas: OS concluídas (data_conclusao) no mês corrente
-    const mesRef = chaveMes(state.currentSystemTime);
-    const eIEA = (os) => CODIGOS_IEA.has(Number(os.id_tipo_servico));
-    const qt = window.COIDatabase.os.filter(os =>
-      chaveMes(os.data_abertura) === mesRef && eIEA(os)
-    ).length;
-    const baixadasMes = window.COIDatabase.os.filter(os =>
-      os.status === "Concluída" &&
-      chaveMes(os.data_conclusao) === mesRef &&
-      eIEA(os)
-    );
-    const baixadas = baixadasMes.length;
-    const qa = baixadasMes.filter(os => {
+    // Painel de contexto na tela OS Atrasadas: mostra TODAS as OS (sem filtro
+    // dos 35 códigos IEA nem exclusão de Agendadas/Geradas), pra dar visão
+    // operacional ampla. Só a tela "Indicadores Contratuais" aplica esses
+    // filtros estritos do contrato.
+    const allOS = window.COIDatabase.os;
+    const qt = allOS.length;
+    const baixadas = allOS.filter(os => os.status === "Concluída").length;
+    const qa = allOS.filter(os => {
+      if (os.status !== "Concluída") return false;
       const { concluidaNoPrazo, semSlaFormal } = calculateSLADetails(os);
       return concluidaNoPrazo || semSlaFormal;
     }).length;
@@ -5020,15 +5022,16 @@ function _doExport(){
     };
 
     const emitidasMes = window.COIDatabase.os.filter(os =>
-      dentroDoPeriodo(os.data_abertura) && eIEA(os)
+      dentroDoPeriodo(os.data_abertura) && eIEA(os) && !situacaoNaoContaIEA(os)
     );
     const baixadasMes = window.COIDatabase.os.filter(os =>
       os.status === "Concluída" &&
       dentroDoPeriodo(os.data_conclusao) &&
-      eIEA(os)
+      eIEA(os) && !situacaoNaoContaIEA(os)
     );
     const pendentesAtuais = window.COIDatabase.os.filter(os =>
-      os.status !== "Concluída" && os.status !== "Cancelada" && eIEA(os)
+      os.status !== "Concluída" && os.status !== "Cancelada" &&
+      eIEA(os) && !situacaoNaoContaIEA(os)
     );
 
     const X = 0.95;
