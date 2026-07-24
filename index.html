@@ -4489,17 +4489,21 @@ function _doExport(){
     if (!qtEl || !window.COIDatabase) return;
 
     const X = 0.95;
-    // Apuração contratual (SIGIS): só os 35 códigos elegíveis, mês corrente.
+    // Apuração contratual (SIGIS): só os 35 códigos elegíveis.
+    // - QT: OS emitidas (data_abertura) no mês corrente
+    // - Baixadas: OS concluídas (data_conclusao) no mês corrente
     const mesRef = chaveMes(state.currentSystemTime);
-    const allOS = window.COIDatabase.os.filter(os =>
-      chaveMes(os.data_abertura) === mesRef &&
-      CODIGOS_IEA.has(Number(os.id_tipo_servico))
+    const eIEA = (os) => CODIGOS_IEA.has(Number(os.id_tipo_servico));
+    const qt = window.COIDatabase.os.filter(os =>
+      chaveMes(os.data_abertura) === mesRef && eIEA(os)
+    ).length;
+    const baixadasMes = window.COIDatabase.os.filter(os =>
+      os.status === "Concluída" &&
+      chaveMes(os.data_conclusao) === mesRef &&
+      eIEA(os)
     );
-    const qt = allOS.length;
-    const baixadas = allOS.filter(os => os.status === "Concluída").length;
-    // IEA = QA / Total Baixadas (fórmula oficial SIGIS, não QA/QT total)
-    const qa = allOS.filter(os => {
-      if (os.status !== "Concluída") return false;
+    const baixadas = baixadasMes.length;
+    const qa = baixadasMes.filter(os => {
       const { concluidaNoPrazo, semSlaFormal } = calculateSLADetails(os);
       return concluidaNoPrazo || semSlaFormal;
     }).length;
@@ -4992,35 +4996,51 @@ function _doExport(){
       if (gv) { gv.textContent = "—"; gv.style.color = "var(--text-muted)"; }
       return;
     }
-    // Regra contratual (SIGIS): IEA considera SOMENTE os 35 códigos de serviço
-    // elegíveis (Ligação + Desobstrução + Reposição) e apenas o mês corrente.
-    // Fiscalizações, análises e pesquisas ficam fora do denominador.
+    // Regra contratual (SIGIS): IEA usa SOMENTE os 35 códigos elegíveis
+    // (Ligação + Desobstrução + Reposição). Fiscalização/análise ficam fora.
+    // - QT = OS EMITIDAS no mês (data_abertura no mês)
+    // - Baixadas = OS CONCLUÍDAS no mês (data_conclusao no mês) — SIGIS conta
+    //   pela data de conclusão, independente de quando a OS foi aberta.
+    // - QA = das Baixadas, quantas foram no prazo (regra contratual por código)
+    // - Pendentes = OS não concluídas nem canceladas (independe do mês)
     const mesRef = chaveMes(state.currentSystemTime);
-    const allOS = window.COIDatabase.os.filter(os =>
-      chaveMes(os.data_abertura) === mesRef &&
-      CODIGOS_IEA.has(Number(os.id_tipo_servico))
+    const eIEA = (os) => CODIGOS_IEA.has(Number(os.id_tipo_servico));
+
+    const emitidasMes = window.COIDatabase.os.filter(os =>
+      chaveMes(os.data_abertura) === mesRef && eIEA(os)
     );
+    const baixadasMes = window.COIDatabase.os.filter(os =>
+      os.status === "Concluída" &&
+      chaveMes(os.data_conclusao) === mesRef &&
+      eIEA(os)
+    );
+    const pendentesAtuais = window.COIDatabase.os.filter(os =>
+      os.status !== "Concluída" && os.status !== "Cancelada" && eIEA(os)
+    );
+
     const X = 0.95;
+    const qt = emitidasMes.length;
+    const baixadas = baixadasMes.length;
 
-    let baixadas = 0, qa = 0, pendVencidas = 0, pendNoPrazo = 0;
-
-    allOS.forEach(os => {
+    let qa = 0;
+    baixadasMes.forEach(os => {
       const { concluidaNoPrazo, semSlaFormal } = calculateSLADetails(os);
+      if (concluidaNoPrazo || semSlaFormal) qa++;
+    });
 
-      if (os.status === "Concluída") {
-        baixadas++;
-        if (concluidaNoPrazo || semSlaFormal) qa++;
-      } else if (os.status !== "Cancelada") {
-        if (isAtrasadaReal(os)) pendVencidas++;
-        else pendNoPrazo++;
-      }
+    let pendVencidas = 0, pendNoPrazo = 0;
+    pendentesAtuais.forEach(os => {
+      if (isAtrasadaReal(os)) pendVencidas++;
+      else pendNoPrazo++;
     });
 
     const foraDoPrazo = baixadas - qa;
     const pendTotal = pendVencidas + pendNoPrazo;
     const ratio = baixadas > 0 ? qa / baixadas : 0;
     const iea = ratio >= X ? 1 : ratio;
-    const qt = allOS.length;
+    // Mantém `allOS` só pra compatibilidade com os cálculos de Tempo Médio
+    // e o gauge de IEA logo abaixo — usa a amostra do mês.
+    const allOS = baixadasMes;
 
     const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
