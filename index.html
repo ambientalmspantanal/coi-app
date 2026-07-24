@@ -3188,7 +3188,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Popular selects com dados reais — chamado após cada importação
   function popularFiltros() {
-    if (!window.COIDatabase) return;
+    if (!window.COIDatabase || !Array.isArray(window.COIDatabase.os)) return;
     const polos = new Set();
     const supervisores = new Set();
     window.COIDatabase.os.forEach(os => {
@@ -5636,7 +5636,13 @@ function _doExport(){
     const [loadedUsers, dadosRemotos] = await Promise.all([fetchJSON(USERS_URL), fetchJSON(DATA_URL)]);
     usersList = Array.isArray(loadedUsers) && loadedUsers.length > 0 ? loadedUsers : DEFAULT_USERS.slice();
     window.COIUsersList = usersList; // Exposto para publish.js
-    if (dadosRemotos) window.COIDatabaseFull = dadosRemotos;
+    if (dadosRemotos) {
+      // Retrocompatibilidade: aceita tanto formato flat ({os,clientes,...})
+      // quanto empacotado ({gerado_em, origem, coi: {os,...}}) de versões antigas.
+      window.COIDatabaseFull = dadosRemotos && dadosRemotos.coi && Array.isArray(dadosRemotos.coi.os)
+        ? dadosRemotos.coi
+        : dadosRemotos;
+    }
     if (loadingEl) loadingEl.textContent = "";
 
     const form = document.getElementById("login-form");

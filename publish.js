@@ -104,15 +104,13 @@
 
     try {
       const sha = await getShaAtual(cfg);
-      const payload = JSON.stringify(
-        {
-          gerado_em: new Date().toISOString(),
-          origem: "COI Web (import Excel)",
-          coi: window.COIDatabase,
-        },
-        null,
-        2
-      );
+      // IMPORTANTE: grava o objeto direto (mesmo formato do "Baixar dados.json"),
+      // sem wrapper — o site lê `dados.os` na raiz.
+      const dadosParaGravar = {
+        ...window.COIDatabase,
+        atualizadoEm: new Date().toISOString(),
+      };
+      const payload = JSON.stringify(dadosParaGravar, null, 2);
       const body = {
         message: `Atualização automática ${new Date().toLocaleString("pt-BR")} — ${window.COIDatabase.os.length} OS`,
         content: bytesEmBase64(payload),
