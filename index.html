@@ -1955,6 +1955,18 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
         </div>
       </div>
 
+      <!-- Backlog Invisível — OS aguardando processo interno Sanesul -->
+      <div class="sigis-grid sigis-grid-2" style="margin-bottom: 24px;">
+        <div class="sigis-card sigis-teal">
+          <span class="sigis-card-label">🕒 Geradas aguardando liberação<span class="info-tip">ⓘ<span class="info-tip-bubble">Notificações sincronizadas pelos coletores, aguardando cruzamento com engenharia e liberação Sanesul. Não são atrasadas — a Ambiental ainda não pode executar. Só entram no cronômetro contratual depois que a Sanesul liberar.</span></span></span>
+          <span class="sigis-card-value" id="backlog-geradas">0</span>
+        </div>
+        <div class="sigis-card sigis-blue">
+          <span class="sigis-card-label">📅 Agendadas aguardando<span class="info-tip">ⓘ<span class="info-tip-bubble">OS relacionadas (ex: Reposição) que aguardam a Ligação principal ser executada antes de serem liberadas. Não penalizam o IEA — dependem de processo interno Sanesul.</span></span></span>
+          <span class="sigis-card-value" id="backlog-agendadas">0</span>
+        </div>
+      </div>
+
       <div class="table-card">
         <div class="table-header-bar" style="flex-direction: column; align-items: stretch; gap: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -3180,14 +3192,22 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1. Não está Concluída nem Cancelada (inclusive checa o texto ORIGINAL
   //    da planilha — se contém "baixad/executad/concluíd/finalizad", NÃO
   //    entra como atrasada, mesmo que o mapStatus tenha errado)
-  // 2. O serviço NÃO está na lista de exclusão
-  // 3. Passou do prazo efetivo (contratual > data_prazo_programada > data_prazo)
+  // 2. NÃO é "Agendada" nem "Gerada" — essas ficam esperando processo
+  //    interno do Sanesul (ex: agendada só é liberada depois que a Ligação
+  //    principal for executada), então não entram no backlog operacional
+  // 3. O serviço NÃO está na lista de exclusão
+  // 4. Passou do prazo efetivo (contratual > data_prazo_programada > data_prazo)
   function isAtrasadaReal(os) {
     if (os.status === "Concluída" || os.status === "Cancelada") return false;
     const sit = (os.situacao_original || "").toString().toLowerCase();
     if (sit.includes("baixad") || sit.includes("executad") || sit.includes("concluíd")
         || sit.includes("concluid") || sit.includes("finalizad") || sit.includes("realizad")
         || sit.includes("cancelad")) {
+      return false;
+    }
+    // Agendadas/Geradas ficam esperando processo interno — não contam como atrasadas
+    if (sit.includes("agendad") || sit.includes("gerad") || sit.includes("emitid")
+        || sit.includes("emissao")) {
       return false;
     }
     if (CODIGOS_EXCLUIR_ATRASADAS.has(os.id_tipo_servico)) return false;
@@ -4562,6 +4582,16 @@ function _doExport(){
       setText("atraso-count", atrasadasFiltradas.length.toLocaleString("pt-BR"));
       setText("atraso-taxa", taxa.toFixed(1).replace(".", ",") + "%");
       setText("atraso-media-dias", mediaDias.toFixed(1).replace(".", ",") + "d");
+
+      // Backlog invisível — Geradas e Agendadas aguardando processo interno
+      // Sanesul. Aplica os mesmos filtros de Cidade/Polo/Supervisor da tela.
+      const contarBacklogSituacao = (padrao) =>
+        pendentesFiltradas.filter(os => {
+          const sit = (os.situacao_original || "").toString().toLowerCase();
+          return padrao.some(p => sit.includes(p));
+        }).length;
+      setText("backlog-geradas", contarBacklogSituacao(["gerad", "emitid"]).toLocaleString("pt-BR"));
+      setText("backlog-agendadas", contarBacklogSituacao(["agendad"]).toLocaleString("pt-BR"));
     }
 
     // Alterna entre a visão de resumo por Polo (padrão) e a lista de OS
