@@ -108,12 +108,22 @@
   }
 
   // "Situacao Os" real -> status usado pelo app (Aberta/Em Andamento/Concluída/Cancelada)
+  // Regra: se JÁ foi baixada/executada (masc ou fem), vira "Concluída" e NÃO
+  // entra mais em nenhuma contagem de atraso. Só entra como atrasada o que
+  // ainda está pendente (Aberta/Em Andamento/Agendada) após o prazo.
   function mapStatus(situacaoOs) {
     if (!situacaoOs) return "Aberta";
     const s = String(situacaoOs).trim().toLowerCase();
-    if (s.includes("baixada") || s.includes("executada")) return "Concluída";
-    if (s.includes("cancelada")) return "Cancelada";
-    if (s.includes("andamento") || s.includes("coletor") || s.includes("agendada")) return "Em Andamento";
+    // "Baixada", "Baixado", "Executada", "Executado", "Executada (Pré-Baixada)", "Concluída", "Finalizada"
+    if (s.includes("baixad") || s.includes("executad") || s.includes("concluíd")
+        || s.includes("concluid") || s.includes("finalizad") || s.includes("realizad")) {
+      return "Concluída";
+    }
+    if (s.includes("cancelad")) return "Cancelada";
+    if (s.includes("andamento") || s.includes("coletor") || s.includes("agendad")
+        || s.includes("gerad") || s.includes("emitid")) {
+      return "Em Andamento";
+    }
     return "Aberta";
   }
 

@@ -3177,11 +3177,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Uma OS é considerada "Atrasada" quando:
-  // 1. Não está Concluída nem Cancelada
+  // 1. Não está Concluída nem Cancelada (inclusive checa o texto ORIGINAL
+  //    da planilha — se contém "baixad/executad/concluíd/finalizad", NÃO
+  //    entra como atrasada, mesmo que o mapStatus tenha errado)
   // 2. O serviço NÃO está na lista de exclusão
   // 3. Passou do prazo efetivo (contratual > data_prazo_programada > data_prazo)
   function isAtrasadaReal(os) {
     if (os.status === "Concluída" || os.status === "Cancelada") return false;
+    const sit = (os.situacao_original || "").toString().toLowerCase();
+    if (sit.includes("baixad") || sit.includes("executad") || sit.includes("concluíd")
+        || sit.includes("concluid") || sit.includes("finalizad") || sit.includes("realizad")
+        || sit.includes("cancelad")) {
+      return false;
+    }
     if (CODIGOS_EXCLUIR_ATRASADAS.has(os.id_tipo_servico)) return false;
     const prazo = obterDataPrazoEfetiva(os);
     if (!prazo) return false;
