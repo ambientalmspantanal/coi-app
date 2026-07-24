@@ -14,8 +14,29 @@
     "polo": null
   },
   {
+    "nome": "Valdecir.de Lima",
+    "login": "valdecir.dlima.aq",
+    "senha": "Pantanal@26",
+    "papel": "polo",
+    "polo": "AQUIDAUANA"
+  },
+  {
     "nome": "Valdecir de Lima",
-    "login": "valdecir.dlima.1",
+    "login": "valdecir.dlima.co",
+    "senha": "Pantanal@26",
+    "papel": "polo",
+    "polo": "CORUMBA"
+  },
+  {
+    "nome": "Nivaldo Luiz da Silva",
+    "login": "nivaldo.luiz",
+    "senha": "Pantanal@26",
+    "papel": "gestor",
+    "polo": null
+  },
+  {
+    "nome": "Valdecir de Lima",
+    "login": "valdecir.dlima.tr",
     "senha": "Pantanal@26",
     "papel": "polo",
     "polo": "TRES LAGOAS"
