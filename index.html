@@ -1656,7 +1656,9 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
           <label class="filter-label" for="filter-period">Período</label>
           <select class="filter-select" id="filter-period">
             <option value="all">Todo o histórico</option>
+            <option value="3d">Últimos 3 dias</option>
             <option value="7d">Últimos 7 dias</option>
+            <option value="15d">Últimos 15 dias</option>
             <option value="month">Este Mês (Julho)</option>
           </select>
         </div>
@@ -3188,7 +3190,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // era escondida ao clicar em outra aba, então aparecia indevidamente aqui.
   (function () {
     const filterBar = document.querySelector(".topbar .filter-bar");
-    const telasSemFiltroGlobal = ["contratuais", "atrasadas", "vencehoje"];
+    const telasSemFiltroGlobal = ["atrasadas", "vencehoje"];
     if (filterBar && telasSemFiltroGlobal.includes(state.activeTab)) {
       filterBar.style.display = "none";
     }
@@ -3295,7 +3297,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // filtro "que não funciona".
         const filterBar = document.querySelector(".topbar .filter-bar");
         if (filterBar) {
-          const telasSemFiltroGlobal = ["contratuais", "atrasadas", "vencehoje"];
+          const telasSemFiltroGlobal = ["atrasadas", "vencehoje"];
           filterBar.style.display = telasSemFiltroGlobal.includes(tabId) ? "none" : "";
         }
 
@@ -4998,20 +5000,31 @@ function _doExport(){
     }
     // Regra contratual (SIGIS): IEA usa SOMENTE os 35 códigos elegíveis
     // (Ligação + Desobstrução + Reposição). Fiscalização/análise ficam fora.
-    // - QT = OS EMITIDAS no mês (data_abertura no mês)
-    // - Baixadas = OS CONCLUÍDAS no mês (data_conclusao no mês) — SIGIS conta
-    //   pela data de conclusão, independente de quando a OS foi aberta.
+    // - QT = OS EMITIDAS no período (data_abertura no período)
+    // - Baixadas = OS CONCLUÍDAS no período (data_conclusao no período)
     // - QA = das Baixadas, quantas foram no prazo (regra contratual por código)
-    // - Pendentes = OS não concluídas nem canceladas (independe do mês)
-    const mesRef = chaveMes(state.currentSystemTime);
+    // Período segue o filtro do topbar (Todo/3d/7d/15d/Mês).
     const eIEA = (os) => CODIGOS_IEA.has(Number(os.id_tipo_servico));
+    const periodo = state.filters?.period || "month";
+    const agora = state.currentSystemTime;
+    const dentroDoPeriodo = (dt) => {
+      if (!dt) return false;
+      const d = dt instanceof Date ? dt : new Date(dt);
+      if (isNaN(d.getTime())) return false;
+      if (periodo === "all") return true;
+      if (periodo === "month") return chaveMes(d) === chaveMes(agora);
+      const dias = periodo === "3d" ? 3 : periodo === "7d" ? 7 : periodo === "15d" ? 15 : null;
+      if (dias === null) return chaveMes(d) === chaveMes(agora);
+      const diff = (agora - d) / (1000 * 3600 * 24);
+      return diff >= 0 && diff <= dias;
+    };
 
     const emitidasMes = window.COIDatabase.os.filter(os =>
-      chaveMes(os.data_abertura) === mesRef && eIEA(os)
+      dentroDoPeriodo(os.data_abertura) && eIEA(os)
     );
     const baixadasMes = window.COIDatabase.os.filter(os =>
       os.status === "Concluída" &&
-      chaveMes(os.data_conclusao) === mesRef &&
+      dentroDoPeriodo(os.data_conclusao) &&
       eIEA(os)
     );
     const pendentesAtuais = window.COIDatabase.os.filter(os =>
