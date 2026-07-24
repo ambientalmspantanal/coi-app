@@ -3111,6 +3111,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const CODIGOS_DESOBSTRUCAO_SLA = new Set([43000,43001,43002,43100,61400,61600]);
   const CODIGOS_REPOSICAO_SLA = new Set([99550,99551,99552,99553,99554,99555,99556,99557]);
   const CODIGOS_SEM_PRAZO_FORMAL = new Set([44291, 60700, 61800]);
+  // Serviços contratualmente elegíveis para o IEA (35 códigos oficiais).
+  // Só estes contam no QT/QA — fiscalizações, análises e pesquisas ficam fora.
+  const CODIGOS_IEA = new Set([
+    ...CODIGOS_LIGACAO_SLA,
+    ...CODIGOS_DESOBSTRUCAO_SLA,
+    ...CODIGOS_REPOSICAO_SLA,
+    ...CODIGOS_SEM_PRAZO_FORMAL,
+  ]);
   const PRAZO_LIGACAO_UTEIS = 10;
   const PRAZO_DESOBSTRUCAO_HORAS = 24;
   const PRAZO_REPOSICAO_UTEIS_PADRAO = 5;
@@ -4481,9 +4489,12 @@ function _doExport(){
     if (!qtEl || !window.COIDatabase) return;
 
     const X = 0.95;
-    // Apuração contratual mensal: considera apenas OS abertas no mês corrente.
+    // Apuração contratual (SIGIS): só os 35 códigos elegíveis, mês corrente.
     const mesRef = chaveMes(state.currentSystemTime);
-    const allOS = window.COIDatabase.os.filter(os => chaveMes(os.data_abertura) === mesRef);
+    const allOS = window.COIDatabase.os.filter(os =>
+      chaveMes(os.data_abertura) === mesRef &&
+      CODIGOS_IEA.has(Number(os.id_tipo_servico))
+    );
     const qt = allOS.length;
     const baixadas = allOS.filter(os => os.status === "Concluída").length;
     // IEA = QA / Total Baixadas (fórmula oficial SIGIS, não QA/QT total)
@@ -4981,9 +4992,14 @@ function _doExport(){
       if (gv) { gv.textContent = "—"; gv.style.color = "var(--text-muted)"; }
       return;
     }
-    // Regra contratual: IEA reflete SÓ o mês corrente (OS abertas no mês).
+    // Regra contratual (SIGIS): IEA considera SOMENTE os 35 códigos de serviço
+    // elegíveis (Ligação + Desobstrução + Reposição) e apenas o mês corrente.
+    // Fiscalizações, análises e pesquisas ficam fora do denominador.
     const mesRef = chaveMes(state.currentSystemTime);
-    const allOS = window.COIDatabase.os.filter(os => chaveMes(os.data_abertura) === mesRef);
+    const allOS = window.COIDatabase.os.filter(os =>
+      chaveMes(os.data_abertura) === mesRef &&
+      CODIGOS_IEA.has(Number(os.id_tipo_servico))
+    );
     const X = 0.95;
 
     let baixadas = 0, qa = 0, pendVencidas = 0, pendNoPrazo = 0;
