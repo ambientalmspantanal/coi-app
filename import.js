@@ -12,6 +12,7 @@
 (function () {
   const STORAGE_KEY = "coi_db";
   const BASE_STORAGE_KEY = "coi_base_regional";
+  const HISTORICA_STORAGE_KEY = "coi_base_historica";
 
   // Base de Regionais embutida (Cidade → Polo/Supervisor/Regional).
   // Gerada a partir do arquivo Base_Polos.xls — 70 cidades do MS.
@@ -57,16 +58,15 @@
     14820: { prazoValor: 10, unidade: "DIAS_UTEIS" },
     15010: { prazoValor: 10, unidade: "DIAS_UTEIS" },
     15020: { prazoValor: 10, unidade: "DIAS_UTEIS" },
-    // DESOBSTRUÇÃO — 24 horas
-    43000: { prazoValor: 1, unidade: "DIAS_UTEIS" },
-    43001: { prazoValor: 1, unidade: "DIAS_UTEIS" },
-    43002: { prazoValor: 1, unidade: "DIAS_UTEIS" },
-    43100: { prazoValor: 1, unidade: "DIAS_UTEIS" },
-    44291: { prazoValor: 1, unidade: "DIAS_UTEIS" },
-    60700: { prazoValor: 1, unidade: "DIAS_UTEIS" },
-    61400: { prazoValor: 1, unidade: "DIAS_UTEIS" },
-    61600: { prazoValor: 1, unidade: "DIAS_UTEIS" },
-    61800: { prazoValor: 1, unidade: "DIAS_UTEIS" },
+    // DESOBSTRUÇÃO — 24 horas corridas (unificado com app.js/index.html).
+    // 44291/60700/61800 ficam DE FORA — sem SLA formal (mesma regra de
+    // CODIGOS_SEM_PRAZO_FORMAL no app.js), não entram aqui.
+    43000: { prazoValor: 24, unidade: "HORAS" },
+    43001: { prazoValor: 24, unidade: "HORAS" },
+    43002: { prazoValor: 24, unidade: "HORAS" },
+    43100: { prazoValor: 24, unidade: "HORAS" },
+    61400: { prazoValor: 24, unidade: "HORAS" },
+    61600: { prazoValor: 24, unidade: "HORAS" },
     // REPOSIÇÃO — 5 dias úteis
     99550: { prazoValor: 5, unidade: "DIAS_UTEIS" },
     99551: { prazoValor: 5, unidade: "DIAS_UTEIS" },
@@ -235,6 +235,125 @@
   }
 
   // ---------------------------------------------------------------
+  // Sprint COI-16 — Separação Operacional / IEA
+  // A planilha do SIGIS já vem separada por natureza: um arquivo traz
+  // só OS "Baixada (Encerrada)" (IEA), outro traz as situações
+  // operacionais (Gerada/Emitida/Agendada/Programada/Em Execução/
+  // Disponível para Coletor). A detecção usa exclusivamente o
+  // conteúdo da coluna "Situacao Os" — nunca código de serviço, SLA
+  // ou "Status Prazo".
+  // ---------------------------------------------------------------
+
+  // 100% das linhas com "Baixada (Encerrada)" -> iea; qualquer outra
+  // situação (mesmo que misto) -> operacional.
+  function detectarTipoRelatorio(osRows) {
+    if (!osRows || osRows.length === 0) return "operacional";
+    const todasBaixadas = osRows.every((r) => {
+      const situacao = r["Situacao Os"] != null ? String(r["Situacao Os"]).trim() : "";
+      return situacao === "Baixada (Encerrada)";
+    });
+    return todasBaixadas ? "iea" : "operacional";
+  }
+
+  function criarEstruturaVazia() {
+    return { clientes: [], tecnicos: [], tiposServico: [], os: [], historicoStatus: [] };
+  }
+
+  // Garante que window.COIDatabase esteja no formato {operacional, iea}.
+  // Se ainda for o formato antigo (achatado, direto em .clientes/.os/...),
+  // migra o conteúdo existente para dentro de "operacional" sem perder nada.
+  function garantirEstruturaSeparada() {
+    if (!window.COIDatabase) {
+      window.COIDatabase = { operacional: criarEstruturaVazia(), iea: criarEstruturaVazia() };
+      return;
+    }
+    if (!window.COIDatabase.operacional || !window.COIDatabase.iea) {
+      const legado = {
+        clientes: window.COIDatabase.clientes || [],
+        tecnicos: window.COIDatabase.tecnicos || [],
+        tiposServico: window.COIDatabase.tiposServico || [],
+        os: window.COIDatabase.os || [],
+        historicoStatus: window.COIDatabase.historicoStatus || []
+      };
+      window.COIDatabase = {
+        operacional: window.COIDatabase.operacional || legado,
+        iea: window.COIDatabase.iea || criarEstruturaVazia()
+      };
+    }
+  }
+
+  // Compatibilidade total: window.COIDatabase.os/.clientes/.tecnicos/
+  // .tiposServico/.historicoStatus continuam existindo como a UNIÃO de
+  // operacional + iea, para nada em app.js precisar mudar.
+  function instalarGettersCompatibilidade(db) {
+    ["clientes", "tecnicos", "tiposServico", "os", "historicoStatus"].forEach((campo) => {
+      Object.defineProperty(db, campo, {
+        get() {
+          const op = (db.operacional && db.operacional[campo]) || [];
+          const ie = (db.iea && db.iea[campo]) || [];
+          return [...op, ...ie];
+        },
+        enumerable: true,
+        configurable: true
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Base Histórica — Sprint COI-18 (30/07/2026)
+  // Estrutura independente de window.COIDatabase, criada para acumular
+  // OS encerradas ao longo do tempo sem depender da substituição total
+  // que a importação operacional/iea aplica hoje. Não é lida por nenhum
+  // cálculo de IEA, dashboard ou tela operacional — puramente aditiva.
+  // Chave composta (Decisão nº 14 do MASTER): Nº OS + Código de Serviço,
+  // usando só campos imutáveis. Regra de upsert restrita a INSERE: se a
+  // chave já existe, o registro é ignorado (OS encerrada não muda).
+  // ---------------------------------------------------------------
+  function chaveHistorica(os) {
+    const numOsLimpo = String(os.id_os != null ? os.id_os : "").replace(/\D/g, "");
+    const codigo = os.id_tipo_servico != null ? os.id_tipo_servico : "SEM_CODIGO";
+    return `${numOsLimpo}|${codigo}`;
+  }
+
+  function carregarBaseHistorica() {
+    if (window.COIBaseHistorica) return window.COIBaseHistorica;
+    let carregada = null;
+    try {
+      const saved = localStorage.getItem(HISTORICA_STORAGE_KEY);
+      if (saved) carregada = JSON.parse(saved);
+    } catch (err) {
+      console.warn("Não foi possível carregar a Base Histórica salva:", err);
+    }
+    window.COIBaseHistorica = carregada || { os: {}, ultimaImportacao: null };
+    return window.COIBaseHistorica;
+  }
+
+  // Mescla as OS encerradas do arquivo importado na Base Histórica.
+  // Existe na base -> IGNORA (nunca sobrescreve). Não existe -> INSERE.
+  function mergeBaseHistorica(osArray) {
+    const base = carregarBaseHistorica();
+    let adicionados = 0;
+    let ignorados = 0;
+    (osArray || []).forEach((os) => {
+      const chave = chaveHistorica(os);
+      if (base.os[chave]) {
+        ignorados++;
+        return;
+      }
+      base.os[chave] = { ...os, _importado_em: new Date().toISOString() };
+      adicionados++;
+    });
+    base.ultimaImportacao = new Date().toISOString();
+    try {
+      localStorage.setItem(HISTORICA_STORAGE_KEY, JSON.stringify(base));
+    } catch (err) {
+      console.warn("Não foi possível salvar a Base Histórica:", err);
+    }
+    console.log(`Base Histórica: +${adicionados} nova(s), ${ignorados} já existente(s) (ignorada(s)), total acumulado: ${Object.keys(base.os).length}`);
+    return { adicionados, ignorados, total: Object.keys(base.os).length };
+  }
+
+  // ---------------------------------------------------------------
   // handleFileSelection: único ponto de entrada da importação.
   // Aceita 1 ou vários arquivos de uma vez; identifica sozinho se cada
   // um é a planilha de OS ("Nº OS") ou a Base de Regionais ("Cidade
@@ -296,19 +415,31 @@
     }
 
     // Processa a planilha de OS, se veio alguma
+    let tipoDetectado = null;
     if (osRows) {
+      tipoDetectado = detectarTipoRelatorio(osRows);
       const db = buildDatabaseFromRows(osRows, regionalRows || []);
-      window.COIDatabase = db;
+      garantirEstruturaSeparada();
+      window.COIDatabase[tipoDetectado] = db;
+      instalarGettersCompatibilidade(window.COIDatabase);
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(window.COIDatabase));
       } catch (err) {
         console.warn("Não foi possível salvar em localStorage:", err);
+      }
+      // Base Histórica: só acumula em importações de encerradas (tipo "iea").
+      // Não interfere em window.COIDatabase nem em nenhum cálculo existente.
+      if (tipoDetectado === "iea") {
+        mergeBaseHistorica(db.os);
       }
     }
 
     // Monta a mensagem de status final
     const partes = [];
-    if (osRows) partes.push(`Arquivo: ${osFileName} | Registros: ${window.COIDatabase.os.length}`);
+    if (osRows) {
+      const rotulo = tipoDetectado === "iea" ? "IEA (Baixada/Encerrada)" : "Operacional";
+      partes.push(`Arquivo: ${osFileName} (${rotulo}) | Registros no arquivo: ${window.COIDatabase[tipoDetectado].os.length} | Total geral: ${window.COIDatabase.os.length}`);
+    }
     if (regionalRows && regionalRows.length > 0) partes.push(`Base de Regionais: ${regionalRows.length} cidades (importada)`);
     else if (osRows) partes.push(`Base de Regionais: 70 cidades (embutida)`);
     if (!osRows && !regionalRows) partes.push("Nenhum arquivo reconhecido (esperado: coluna \"Nº OS\" ou \"Cidade nome\")");
@@ -421,10 +552,12 @@
         slaFormal = { prazoValor: 7, unidade: "DIAS_UTEIS" };
       }
       if (slaFormal && dataAbertura) {
-        // Todos os prazos agora em DIAS_UTEIS (alinhado com o SIGIS).
-        // Desobstrução: 1 dia útil (regra vigente no SIGIS até a conversão
-        // formal para 24h pela nova R.O.).
-        dataPrazo = adicionarDiasUteis(dataAbertura, slaFormal.prazoValor);
+        // Unificação Desobstrução = 24h corridas (alinhado com app.js/
+        // index.html): unidade "HORAS" soma horas corridas; "DIAS_UTEIS"
+        // (Ligação/Reposição) continua somando dias úteis, sem alteração.
+        dataPrazo = slaFormal.unidade === "HORAS"
+          ? new Date(dataAbertura.getTime() + slaFormal.prazoValor * 3600 * 1000)
+          : adicionarDiasUteis(dataAbertura, slaFormal.prazoValor);
       }
 
       const status = mapStatus(r["Situacao Os"]);
@@ -494,6 +627,8 @@
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       window.COIDatabase = JSON.parse(saved);
+      garantirEstruturaSeparada();
+      instalarGettersCompatibilidade(window.COIDatabase);
     }
   } catch (err) {
     console.warn("Não foi possível carregar dados salvos:", err);
@@ -529,5 +664,5 @@
     }
   });
 
-  window.COIImport = { handleFileSelection, buildDatabaseFromRows };
+  window.COIImport = { handleFileSelection, buildDatabaseFromRows, mergeBaseHistorica, carregarBaseHistorica };
 })();

@@ -1,11 +1,12 @@
 // =====================================================================
 // PUBLICAÇÃO AUTOMÁTICA NO GITHUB
-// Envia o snapshot atual (window.COIDatabase) direto para o repositório
-// do GitHub via API — dispensa o passo manual de subir arquivos no site.
+// Envia a base integral atual (window.COIDatabaseFull, via window.COIAuth
+// — Correção 7, 30/07/2026) direto para o repositório do GitHub via API —
+// dispensa o passo manual de subir arquivos no site.
 //
 // Fluxo:
-//   1. Usuário importa a planilha (mantém-se como está)
-//   2. Clica "🚀 Publicar no site"
+//   1. Usuário admin importa a planilha (mantém-se como está)
+//   2. Clica "🚀 Publicar no site" (validação de admin dentro de publicar())
 //   3. Se for a primeira vez, pede: owner, repo, branch, path, token
 //      (salvos em localStorage, nunca mais pergunta)
 //   4. Faz PUT no arquivo data.json do repo (GitHub Contents API)
@@ -87,12 +88,24 @@
   }
 
   async function publicar() {
+    // Correção 7 (30/07/2026): validação funcional de admin, usando a
+    // sessão canônica exposta por index.html — interrompe antes de ler
+    // token, montar payload ou chamar rede se o papel não for admin.
+    if (!window.COIAuth || typeof window.COIAuth.isAdmin !== "function" || !window.COIAuth.isAdmin()) {
+      atualizarStatus("❌ Acesso negado: publicação disponível apenas para administradores.", "err");
+      alert("Acesso negado: publicação disponível apenas para administradores.");
+      return;
+    }
+
     let cfg = carregarCfg();
     if (!cfg) {
       cfg = pedirConfig(null);
       if (!cfg) { atualizarStatus("Publicação cancelada.", "warn"); return; }
     }
-    if (!window.COIDatabase || !Array.isArray(window.COIDatabase.os) || window.COIDatabase.os.length === 0) {
+    // Correção 7: usa window.COIDatabaseFull (via window.COIAuth), nunca
+    // window.COIDatabase (visão filtrada da sessão).
+    const baseIntegral = window.COIAuth.getBaseIntegral();
+    if (!baseIntegral || !Array.isArray(baseIntegral.os) || baseIntegral.os.length === 0) {
       alert("Nenhum dado importado ainda — importe uma planilha antes de publicar.");
       return;
     }
@@ -107,12 +120,12 @@
       // IMPORTANTE: grava o objeto direto (mesmo formato do "Baixar dados.json"),
       // sem wrapper — o site lê `dados.os` na raiz.
       const dadosParaGravar = {
-        ...window.COIDatabase,
+        ...baseIntegral,
         atualizadoEm: new Date().toISOString(),
       };
       const payload = JSON.stringify(dadosParaGravar, null, 2);
       const body = {
-        message: `Atualização automática ${new Date().toLocaleString("pt-BR")} — ${window.COIDatabase.os.length} OS`,
+        message: `Atualização automática ${new Date().toLocaleString("pt-BR")} — ${baseIntegral.os.length} OS`,
         content: bytesEmBase64(payload),
         branch: cfg.branch,
       };
@@ -160,18 +173,33 @@
   }
 
   // Publica a lista de usuários (usuarios.json) usando o mesmo token/repo.
-  // A lista é lida de window.COIUsersList (expõe do fluxo de Gestão de Usuários)
-  // ou aceita como argumento direto — o botão injetado abaixo usa a global.
+  // A lista é obtida via window.COIAuth.getUsuariosSeguro() (cópia
+  // defensiva e validada — nunca window.COIUsersList direto) ou aceita
+  // como argumento direto — o botão injetado abaixo usa a global.
+  // Correção (30/07/2026): validação funcional de admin, via a sessão
+  // canônica exposta em window.COIAuth, ANTES de qualquer leitura/
+  // solicitação de token, montagem de payload, alteração de estado do
+  // botão ou chamada de rede.
   async function publicarUsuarios(listaOpcional) {
+    if (!window.COIAuth || typeof window.COIAuth.isAdmin !== "function" || !window.COIAuth.isAdmin()) {
+      atualizarStatus("❌ Acesso negado: publicação de usuários disponível apenas para administradores.", "err");
+      alert("Acesso negado: publicação de usuários disponível apenas para administradores.");
+      return;
+    }
+
+    // Cópia defensiva e validada — nunca serializa window.COIUsersList
+    // diretamente. Interrompe antes de carregarCfg()/pedirConfig() se a
+    // lista for inválida.
+    const lista = listaOpcional || (window.COIAuth.getUsuariosSeguro ? window.COIAuth.getUsuariosSeguro() : null);
+    if (!Array.isArray(lista) || lista.length === 0) {
+      alert("Nenhum usuário válido para publicar — cadastre pelo menos 1 antes.");
+      return;
+    }
+
     let cfg = carregarCfg();
     if (!cfg) {
       cfg = pedirConfig(null);
       if (!cfg) return;
-    }
-    const lista = listaOpcional || window.COIUsersList;
-    if (!Array.isArray(lista) || lista.length === 0) {
-      alert("Nenhum usuário para publicar — cadastre pelo menos 1 antes.");
-      return;
     }
 
     const btn = document.getElementById("btn-publicar-usuarios");

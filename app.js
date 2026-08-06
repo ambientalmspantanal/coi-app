@@ -53,6 +53,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const CODIGOS_DESOBSTRUCAO_SLA = new Set([43000,43001,43002,43100,61400,61600]);
   const CODIGOS_REPOSICAO_SLA = new Set([99550,99551,99552,99553,99554,99555,99556,99557]);
   const CODIGOS_SEM_PRAZO_FORMAL = new Set([44291, 60700, 61800]);
+  // Códigos por categoria (Tabela 8 do 4º Termo Aditivo) — usados pela tela
+  // Indicadores Contratuais para agrupar o Tempo Médio por tipo de serviço.
+  // Declarados aqui (antes de renderAll() na inicialização) para evitar
+  // ReferenceError de TDZ, já que "contratuais" é a aba padrão do sistema.
+  const CODIGOS_LIGACAO = new Set([14110,14114,14115,14170,14210,14320,14410,14420,14510,14520,14610,14620,14710,14721,14810,14820,15010,15020]);
+  const CODIGOS_DESOBSTRUCAO = new Set([43000,43001,43002,43100,44291,60700,61400,61600,61800]);
+  const CODIGOS_REPOSICAO = new Set([99550,99551,99552,99553,99554,99555,99556,99557]);
   const PRAZO_LIGACAO_UTEIS = 10;
   const PRAZO_DESOBSTRUCAO_HORAS = 24;
   const PRAZO_REPOSICAO_UTEIS_PADRAO = 5;
@@ -710,17 +717,40 @@ document.addEventListener("DOMContentLoaded", () => {
     const listaFiltrada = lista.filter(os => statusSelecionados.includes(os.situacao_original || os.status));
     if (listaFiltrada.length === 0) { alert("Nenhuma OS para os status selecionados."); return; }
 
-    const now = state.currentSystemTime;
+    // Correção (bug Mini BI): usa a data real do dispositivo para calcular
+    // "Restam"/"Atraso" no Mini BI, não a data simulada currentSystemTime
+    // (usada pelas demais telas para manter o cenário de teste consistente).
+    const now = new Date();
     const hoje = now.toLocaleDateString("pt-BR");
     const filtroDesc = termos.length > 0 ? termos.join(", ") : "Todos os serviços";
     function fmtDate(v) { if (!v) return ""; try { return new Date(v).toLocaleDateString("pt-BR"); } catch(e){return "";} }
     function getSit(os) {
-      if (os.status === "Concluída" || os.status === "Cancelada") return { sit: os.status, dias: 0, prazo: "" };
+      if (os.status === "Concluída" || os.status === "Cancelada") return { sit: os.status, dias: 0, horas: 0, prazo: "" };
       const pr = os.data_prazo_programada ? new Date(os.data_prazo_programada) : (os.data_prazo ? new Date(os.data_prazo) : null);
-      if (!pr) return { sit: "SEM PRAZO", dias: 0, prazo: "" };
+      if (!pr) return { sit: "SEM PRAZO", dias: 0, horas: 0, prazo: "" };
       const venc = now > pr;
       const dias = Math.floor(Math.abs(now - pr) / 86400000);
-      return { sit: venc ? "ATRASADA" : "NO PRAZO", dias, prazo: pr.toLocaleDateString("pt-BR") };
+      const horas = Math.floor(Math.abs(now - pr) / 3600000);
+      return { sit: venc ? "ATRASADA" : "NO PRAZO", dias, horas, prazo: pr.toLocaleDateString("pt-BR") };
+    }
+    // Sprint COI-18D: Desobstrução (SLA de 24h) exibe o prazo em horas —
+    // "dias" fica sempre 0/impreciso para uma janela menor que 24h.
+    function rotuloPrazo(o, atrasada) {
+      const ehDesobstrucao = CODIGOS_DESOBSTRUCAO_SLA.has(Number(o.cod));
+      if (ehDesobstrucao) {
+        return atrasada ? `Atrasada há ${o.horas}h` : `Restam ${o.horas}h`;
+      }
+      if (atrasada) return `Atrasada há ${o.dias} dias`;
+      return o.dias === 0 ? "Vence Hoje" : o.dias === 1 ? "Vence Amanhã" : `Restam ${o.dias} dias`;
+    }
+    function corPrazo(o, atrasada) {
+      const ehDesobstrucao = CODIGOS_DESOBSTRUCAO_SLA.has(Number(o.cod));
+      if (ehDesobstrucao) {
+        if (atrasada) return o.horas > 12 ? "#ef4444" : o.horas > 4 ? "#f59e0b" : "#374151";
+        return o.horas <= 4 ? "#ef4444" : o.horas <= 12 ? "#f59e0b" : "#22c55e";
+      }
+      if (atrasada) return o.dias > 30 ? "#ef4444" : o.dias > 10 ? "#f59e0b" : "#374151";
+      return o.dias <= 2 ? "#ef4444" : o.dias <= 5 ? "#f59e0b" : "#22c55e";
     }
     const proc = listaFiltrada.map(os => { const s = getSit(os); return { ...s, num: os.numero_os, mat: getClienteName(os.id_cliente), mun: os.municipio||"", polo: os.polo||"", sup: os.supervisor||"", serv: getServicoName(os.id_tipo_servico), cod: os.id_tipo_servico||"", eq: getTecnicoName(os.id_tecnico), st: os.status, ab: fmtDate(os.data_abertura) }; });
     const atras = proc.filter(o=>o.sit==="ATRASADA").sort((a,b)=>b.dias-a.dias);
@@ -780,8 +810,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const atrasRows = atras.map((o,i)=>{
       const bg=i%2===0?"rgba(239,68,68,.06)":"transparent";
-      const dc=o.dias>30?"#ef4444":o.dias>10?"#f59e0b":"#64748b";
-      const badge=o.dias>30?`<span style="background:#ef4444;color:#fff;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700">${o.dias}d</span>`:o.dias>10?`<span style="background:#f59e0b;color:#fff;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700">${o.dias}d</span>`:`<span style="background:#374151;color:#fff;padding:1px 7px;border-radius:999px;font-size:10px">${o.dias}d</span>`;
+      const dc=corPrazo(o,true);
+      const badge=`<span style="background:${dc};color:#fff;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700">${rotuloPrazo(o,true)}</span>`;
       return `<tr style="background:${bg}">
         <td style="font-weight:700;color:#8dc63f;font-size:11px">${o.num}</td>
         <td style="font-size:11px">${o.mun}</td><td style="font-size:11px;color:#94a3b8">${o.polo}</td>
@@ -795,8 +825,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const okRows = okOS.map((o,i)=>{
       const bg=i%2===0?"rgba(34,197,94,.06)":"transparent";
-      const dc=o.dias<=2?"#ef4444":o.dias<=5?"#f59e0b":"#22c55e";
-      const badge=`<span style="background:${dc};color:#fff;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700">${o.dias}d</span>`;
+      const dc=corPrazo(o,false);
+      const badge=`<span style="background:${dc};color:#fff;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700">${rotuloPrazo(o,false)}</span>`;
       return `<tr style="background:${bg}">
         <td style="font-weight:700;color:#8dc63f;font-size:11px">${o.num}</td>
         <td style="font-size:11px">${o.mun}</td><td style="font-size:11px;color:#94a3b8">${o.polo}</td>
@@ -955,8 +985,8 @@ td{padding:7px 12px;border-bottom:1px solid #1e293b;vertical-align:middle}
                 <thead><tr><th>Nº OS</th><th>Município</th><th>Polo</th><th>Prazo</th><th>Atraso</th></tr></thead>
                 <tbody>${atras.slice(0,10).map((o,i)=>{
                   const bg=i%2===0?"rgba(239,68,68,.05)":"transparent";
-                  const dc=o.dias>30?"#ef4444":o.dias>10?"#f59e0b":"#64748b";
-                  return `<tr style="background:${bg}"><td style="font-weight:700;color:#8dc63f;font-size:11px">${o.num}</td><td style="font-size:11px">${o.mun}</td><td style="font-size:11px;color:#64748b">${o.polo}</td><td style="font-size:11px;color:#64748b;text-align:center">${o.prazo}</td><td style="text-align:center"><span style="background:${dc};color:#fff;padding:1px 8px;border-radius:999px;font-size:10px;font-weight:700">${o.dias}d</span></td></tr>`;
+                  const dc=corPrazo(o,true);
+                  return `<tr style="background:${bg}"><td style="font-weight:700;color:#8dc63f;font-size:11px">${o.num}</td><td style="font-size:11px">${o.mun}</td><td style="font-size:11px;color:#64748b">${o.polo}</td><td style="font-size:11px;color:#64748b;text-align:center">${o.prazo}</td><td style="text-align:center"><span style="background:${dc};color:#fff;padding:1px 8px;border-radius:999px;font-size:10px;font-weight:700">${rotuloPrazo(o,true)}</span></td></tr>`;
                 }).join("")}</tbody>
               </table>
             </div>
@@ -1012,14 +1042,17 @@ function exportarMiniBI(){
   _doExport();
 }
 function _doExport(){
+  // Correção (bug data no Excel do Mini BI): raw:true impede o SheetJS de
+  // reinterpretar o texto já formatado das células (ex.: "03/08/2026")
+  // como data em outro formato — exporta exatamente o que está na tela.
   var wb=XLSX.utils.book_new();
   var t1=document.querySelector('#panel-resumo .block:last-child table');
   if(!t1) t1=document.querySelector('#panel-resumo table');
-  if(t1){var ws1=XLSX.utils.table_to_sheet(t1);XLSX.utils.book_append_sheet(wb,ws1,'Onde Atuar');}
+  if(t1){var ws1=XLSX.utils.table_to_sheet(t1,{raw:true});XLSX.utils.book_append_sheet(wb,ws1,'Onde Atuar');}
   var t2=document.querySelector('#panel-atrasadas table');
-  if(t2){var ws2=XLSX.utils.table_to_sheet(t2);XLSX.utils.book_append_sheet(wb,ws2,'Atrasadas');}
+  if(t2){var ws2=XLSX.utils.table_to_sheet(t2,{raw:true});XLSX.utils.book_append_sheet(wb,ws2,'Atrasadas');}
   var t3=document.querySelector('#panel-noprazo table');
-  if(t3){var ws3=XLSX.utils.table_to_sheet(t3);XLSX.utils.book_append_sheet(wb,ws3,'No Prazo');}
+  if(t3){var ws3=XLSX.utils.table_to_sheet(t3,{raw:true});XLSX.utils.book_append_sheet(wb,ws3,'No Prazo');}
   var data=new Date().toISOString().slice(0,10);
   XLSX.writeFile(wb,'COI_MiniBI_'+data+'.xlsx');
 }
@@ -1219,7 +1252,7 @@ function _doExport(){
       const dias = Math.floor(Math.abs(now - pr) / 86400000);
       return { sit: venc ? "ATRASADA" : "NO PRAZO", dias, prazo: prazoStr };
     }
-    const proc = listaFiltrada.map(os => { const s = getSit(os); return { num: os.numero_os, mat: getClienteName(os.id_cliente), mun: os.municipio||"", polo: os.polo||"", sup: os.supervisor||"", serv: getServicoName(os.id_tipo_servico), cod: os.id_tipo_servico||"", eq: getTecnicoName(os.id_tecnico), st: os.status, ab: fmtDate(os.data_abertura), prazo: s.prazo, conc: fmtDate(os.data_conclusao), sit: s.sit, dias: s.dias }; });
+    const proc = lista.map(os => { const s = getSit(os); return { num: os.numero_os, mat: getClienteName(os.id_cliente), mun: os.municipio||"", polo: os.polo||"", sup: os.supervisor||"", serv: getServicoName(os.id_tipo_servico), cod: os.id_tipo_servico||"", eq: getTecnicoName(os.id_tecnico), st: os.status, ab: fmtDate(os.data_abertura), prazo: s.prazo, conc: fmtDate(os.data_conclusao), sit: s.sit, dias: s.dias }; });
     const atras = proc.filter(o=>o.sit==="ATRASADA").sort((a,b)=>b.dias-a.dias);
     const okOS  = proc.filter(o=>o.sit==="NO PRAZO").sort((a,b)=>a.prazo.localeCompare(b.prazo));
     const porPolo = {};
@@ -1772,16 +1805,24 @@ function _doExport(){
       pendentesPorPolo[polo] = (pendentesPorPolo[polo] || 0) + 1;
     });
 
-    // Selo de status pela TAXA DE ATRASO do polo (atrasadas ÷ pendentes):
-    // proporcional ao tamanho do polo, para diferenciar de verdade —
-    // em valores absolutos, todos os polos ficariam "Crítico".
-    // Crítico ≥ 20% · Atenção ≥ 8% · Estável < 8%.
+    // Ajuste (31/07/2026): a correção anterior reaproveitou 20 e 8 como
+    // contagens absolutas de atraso, mas esses números eram limiares
+    // PERCENTUAIS da regra antiga (taxa de atraso ÷ pendentes) — trocar a
+    // unidade sem uma regra nova documentada foi um erro. Não existe regra
+    // explícita de contagem absoluta em código ou documentação do projeto.
+    // Aplicada a regra mínima definida para este defeito: Estável = 0
+    // atrasadas; Atenção = 1 a 5; Crítico = 6 ou mais. Valor ausente/
+    // inválido/negativo/NaN nunca cai em "Estável". Mesma correção
+    // aplicada em index.html.
     const classifica = (polo, d) => {
-      const pend = pendentesPorPolo[polo] || (d.hoje + d.atraso) || 1;
-      const taxa = (d.atraso / pend) * 100;
-      if (taxa >= 20) return { classe: "critico", rotulo: "Crítico", taxa };
-      if (taxa >= 8) return { classe: "atencao", rotulo: "Atenção", taxa };
-      return { classe: "estavel", rotulo: "Estável", taxa };
+      const atraso = Number(d.atraso);
+      if (!Number.isFinite(atraso) || atraso < 0) {
+        console.warn(`Selo do polo "${polo}": valor de atraso ausente ou inválido (${d.atraso}) — tratado como Atenção, nunca Estável.`);
+        return { classe: "atencao", rotulo: "Atenção", invalido: true, taxa: 0 };
+      }
+      if (atraso >= 6) return { classe: "critico", rotulo: "Crítico", taxa: atraso };
+      if (atraso >= 1) return { classe: "atencao", rotulo: "Atenção", taxa: atraso };
+      return { classe: "estavel", rotulo: "Estável", taxa: atraso };
     };
 
     const linhas = Object.entries(porPolo)
@@ -1823,13 +1864,23 @@ function _doExport(){
       const cidadeTop = Object.entries(sel.cidades).sort((a, b) => b[1] - a[1])[0];
       const seloSel = classifica(state.vencehojeSelectedPolo, sel);
 
+      // Ajuste (31/07/2026): distingue explicitamente OS já atrasadas
+      // (nunca mais "evita que virem atraso amanhã" quando atraso > 0) de
+      // OS que só vencem hoje (ação preventiva) e de valor inválido (nunca
+      // afirma "polo sob controle" quando a criticidade não pôde ser
+      // calculada com segurança). Mesma correção aplicada em index.html.
+      const cidadeTxt = cidadeTop ? ` em ${cidadeTop[0]}` : "";
       let acao;
-      if (seloSel.classe === "critico") {
-        acao = `Reforçar equipe de campo em ${cidadeTop ? cidadeTop[0] : state.vencehojeSelectedPolo} hoje — atraso acumulado (${sel.atraso} OS) já supera o volume que vence hoje. Prioridade: atacar as atrasadas mais antigas antes que o backlog cresça.`;
+      if (seloSel.invalido) {
+        acao = `Não foi possível calcular a criticidade deste polo com segurança — dado de atraso ausente ou inválido. Verifique a base antes de definir prioridade.`;
+      } else if (seloSel.classe === "critico") {
+        acao = `Prioridade crítica: ${state.vencehojeSelectedPolo} possui ${sel.atraso} OS já atrasadas. Concentrar atendimento imediatamente${cidadeTxt} e reduzir o atraso acumulado.`;
       } else if (seloSel.classe === "atencao") {
-        acao = `Concentrar atendimento em ${cidadeTop ? cidadeTop[0] : state.vencehojeSelectedPolo} hoje — ${sel.hoje} OS vencem até o fim do dia${sel.atraso > 0 ? ` e ${sel.atraso} já estão em atraso` : ""}. Atuar agora evita que virem atraso amanhã.`;
+        acao = `Atenção: ${state.vencehojeSelectedPolo} possui ${sel.atraso} OS já atrasadas. Concentrar atendimento${cidadeTxt} para reduzir o atraso acumulado.`;
+      } else if (sel.hoje > 0) {
+        acao = `Concentrar atendimento${cidadeTxt} hoje — ${sel.hoje} OS vencem até o fim do dia. Atuar agora evita que fiquem em atraso.`;
       } else {
-        acao = `Polo sob controle — ${sel.hoje} OS vencem hoje e não há atraso acumulado relevante. Manter o ritmo atual de atendimento.`;
+        acao = `Polo sob controle — ${sel.hoje} OS vencem hoje e não há atraso acumulado. Manter o ritmo atual de atendimento.`;
       }
 
       // Mini-lista de OS: as que vencem hoje primeiro, depois as atrasadas
@@ -1906,11 +1957,22 @@ function _doExport(){
   // Reaproveita calculateSLADetails — mesma fonte de verdade usada no
   // Dashboard e no painel IEA da tela OS Atrasadas.
   // ==========================================
-  // Códigos por categoria (Tabela 8 do 4º Termo Aditivo) — usados só para
-  // agrupar o Tempo Médio de execução por tipo de serviço nesta tela.
-  const CODIGOS_LIGACAO = new Set([14110,14114,14115,14170,14210,14320,14410,14420,14510,14520,14610,14620,14710,14721,14810,14820,15010,15020]);
-  const CODIGOS_DESOBSTRUCAO = new Set([43000,43001,43002,43100,44291,60700,61400,61600,61800]);
-  const CODIGOS_REPOSICAO = new Set([99550,99551,99552,99553,99554,99555,99556,99557]);
+  // Códigos por categoria (Tabela 8 do 4º Termo Aditivo) — declarados no
+  // topo do arquivo (perto de CODIGOS_LIGACAO_SLA) para evitar TDZ.
+
+  // Sprint COI-17: a base IEA usa o Prazo Empresa (data_prazo_programada) do
+  // SIGIS, nunca o prazo contratual recalculado por código de serviço — o
+  // SIGIS já considera a OS "no prazo" com base nesse campo. Usado somente
+  // pelos Indicadores Contratuais (renderContratuais); calculateSLADetails
+  // permanece intocado para não afetar Dashboard/Backlog/Atrasadas/VenceHoje.
+  function concluidaNoPrazoIEA(os) {
+    const prazoRef = os.data_prazo_programada
+      ? new Date(os.data_prazo_programada)
+      : (os.data_prazo ? new Date(os.data_prazo) : null);
+    if (!prazoRef) return true;
+    if (!os.data_conclusao) return true;
+    return new Date(os.data_conclusao) <= prazoRef;
+  }
 
   function calcularTempoMedio(allOS, setCodigos, unidade) {
     const concluidasCategoria = allOS.filter(os =>
@@ -1944,10 +2006,17 @@ function _doExport(){
     const allOS = window.COIDatabase.os.filter(os => chaveMes(os.data_abertura) === mesRef);
     const X = 0.95;
 
+    // Sprint COI-17: identifica OS da base IEA por pertencimento a
+    // window.COIDatabase.iea (não por texto de "Situacao Os").
+    const idsIEA = new Set((window.COIDatabase.iea?.os || []).map(o => o.id_os));
+
     let baixadas = 0, qa = 0, pendVencidas = 0, pendNoPrazo = 0;
 
     allOS.forEach(os => {
-      const { vencida, concluidaNoPrazo, semSlaFormal } = calculateSLADetails(os);
+      const ehIEA = idsIEA.has(os.id_os);
+      const { vencida, concluidaNoPrazo, semSlaFormal } = ehIEA
+        ? { vencida: false, concluidaNoPrazo: concluidaNoPrazoIEA(os), semSlaFormal: false }
+        : calculateSLADetails(os);
 
       if (os.status === "Concluída") {
         baixadas++;

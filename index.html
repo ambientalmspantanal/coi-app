@@ -132,6 +132,13 @@ h1, h2, h3, h4, .outfit-font {
   width: 100%;
 }
 
+/* Item de menu ocultado da experiência (05/08/2026) — não é remoção de
+   código, só de visibilidade. Para reativar uma página: remover esta classe
+   do <li> correspondente. Ver COI_MASTER_PROJECT.md. */
+.nav-item-oculto {
+  display: none;
+}
+
 .nav-link {
   display: flex;
   align-items: center;
@@ -168,6 +175,43 @@ h1, h2, h3, h4, .outfit-font {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+/* Seção Administrador (UX 05/08/2026) — controles de importação/publicação,
+   separados das informações de sessão/versão do .sidebar-footer. */
+.sidebar-admin-section {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sidebar-admin-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 2px;
+}
+/* Especificidade elevada de propósito (.sidebar-admin-section .import-control,
+   0,0,2,0) — a classe .import-control sozinha é definida mais abaixo no
+   arquivo (linha ~1324) com display:flex/align-items:center/gap:12px; com a
+   mesma especificidade (0,0,1,0) que .sidebar-import-controls teria, a regra
+   que vem depois no arquivo venceria a "stretch"/"6px" aqui. O seletor
+   descendente evita essa disputa de ordem de origem. */
+.sidebar-admin-section .import-control {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+.sidebar-import-controls .import-btn {
+  width: 100%;
+  text-align: center;
+}
+.sidebar-import-controls .import-status {
+  font-size: 10px;
+  white-space: normal;
 }
 
 /* Barra Superior */
@@ -355,6 +399,9 @@ h1, h2, h3, h4, .outfit-font {
   gap: 24px;
   margin-bottom: 32px;
 }
+.contratuais-charts-grid {
+  grid-template-columns: 1fr 1fr;
+}
 
 .chart-card {
   background-color: var(--bg-secondary);
@@ -421,6 +468,414 @@ h1, h2, h3, h4, .outfit-font {
   width: 32px;
   text-align: right;
 }
+
+/* Missão Operacional — Centro de Operações do Polo. Painel único (não um
+   grid de cards equivalentes) para responder em 3 segundos: quantas OS,
+   quantas faltam, qual polo, onde está o problema. Paleta clara: branco,
+   verde ambiental (--accent, já a cor de marca), cinza muito claro, azul
+   suave (--info) — sem azul-marinho escuro. */
+.missao-control-hero {
+  padding: 18px 28px 16px;
+  margin-bottom: 14px;
+  background: linear-gradient(150deg, #ffffff 0%, var(--bg-tertiary) 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+.missao-control-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border-color);
+}
+.missao-control-polo {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 0.3px;
+}
+/* 5 KPIs operacionais lado a lado — sem gauge, sem donut, sem percentual
+   circular. Cada um com identidade de cor própria, número grande, leitura
+   em segundos. Atrasadas/Vencem hoje reaproveitam isAtrasadaReal/
+   isVenceHoje (já existentes) — só exibição, nenhuma regra nova. */
+.missao-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.missao-kpi {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 14px 12px;
+  box-shadow: var(--shadow-sm);
+  border-left: 4px solid var(--border-color);
+  text-align: center;
+}
+.missao-kpi-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+}
+.missao-kpi-value {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+/* UX (05/08/2026): fundo levemente tingido por categoria — reforça
+   hierarquia visual sem gradiente, ícone novo ou sombra pesada. */
+.missao-kpi-dia { border-left-color: var(--info); background: hsl(199, 89%, 96%); }
+.missao-kpi-dia .missao-kpi-value { color: var(--info); }
+.missao-kpi-conc { border-left-color: var(--success); background: hsl(150, 84%, 96%); }
+.missao-kpi-conc .missao-kpi-value { color: var(--success); }
+.missao-kpi-pend { border-left-color: var(--text-muted); background: hsl(215, 14%, 96%); }
+.missao-kpi-pend .missao-kpi-value { color: var(--text-secondary); }
+.missao-kpi-atr { border-left-color: var(--danger); background: hsl(350, 80%, 96%); }
+.missao-kpi-atr .missao-kpi-value { color: var(--danger); }
+.missao-kpi-venc { border-left-color: var(--warning); background: hsl(32, 92%, 96%); }
+.missao-kpi-venc .missao-kpi-value { color: var(--warning); }
+
+/* Andamento do dia — barra horizontal simples (concluídas/total do dia). */
+.missao-progresso-dia {
+  margin-bottom: 14px;
+}
+.missao-progresso-dia-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.missao-progresso-dia-label strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+.missao-progresso-dia-track {
+  width: 100%;
+  height: 10px;
+  background-color: var(--border-color);
+  border: 1px solid var(--text-muted);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.missao-progresso-dia-fill {
+  height: 100%;
+  background-color: var(--success);
+  border-radius: 999px;
+  transition: width 0.6s ease;
+}
+
+.missao-control-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.missao-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+.missao-status-pill strong {
+  font-size: 15px;
+}
+.missao-status-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+.missao-status-pill.kpi-card-ok { background: linear-gradient(135deg, var(--success) 0%, hsl(150, 84%, 26%) 100%); color: #fff; }
+.missao-status-pill.kpi-card-atencao { background: linear-gradient(135deg, hsl(45, 93%, 52%) 0%, hsl(45, 93%, 42%) 100%); color: #2a2103; }
+.missao-status-pill.kpi-card-critico { background: linear-gradient(135deg, var(--danger) 0%, hsl(350, 80%, 40%) 100%); color: #fff; }
+.missao-status-pill.kpi-card-programacao { background: linear-gradient(135deg, var(--warning) 0%, hsl(32, 92%, 38%) 100%); color: #fff; }
+
+/* Onde está o problema / o que exige ação agora — banner sem borda, com
+   gradiente suave, sobre fundo claro. Sem texto gerado. Botão "Ver OS" é a
+   ação direta, sempre presente quando há problema. Leitura em 3 segundos. */
+.missao-problema-block {
+  background: linear-gradient(135deg, var(--danger-bg) 0%, rgba(239, 68, 68, 0.04) 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
+  margin-bottom: 14px;
+}
+.missao-problema-block.missao-problema-ok {
+  background: var(--bg-tertiary);
+}
+.missao-problema-title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--danger);
+  margin-bottom: 6px;
+}
+.missao-problema-ok .missao-problema-title {
+  color: var(--text-muted);
+}
+.missao-problema-ver-btn {
+  margin-left: auto;
+  padding: 6px 16px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.missao-problema-body {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+.missao-problema-cidade {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.missao-problema-servico {
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+.missao-problema-qtd {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--danger);
+  background-color: rgba(239, 68, 68, 0.14);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+.missao-problema-vazio {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.missao-collapsible-body {
+  margin-bottom: 12px;
+}
+.missao-mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.missao-mini-table th {
+  text-align: left;
+  padding: 6px 8px;
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+}
+.missao-mini-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+}
+.missao-mini-table tr:hover td {
+  background-color: var(--bg-tertiary);
+}
+.missao-select-os {
+  cursor: pointer;
+}
+.missao-equipe-input {
+  width: 100%;
+  min-width: 110px;
+  padding: 4px 6px;
+  font-size: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.missao-equipe-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.missao-programacao-toolbar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+.missao-toolbar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.missao-toolbar-item input {
+  padding: 6px 8px;
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.missao-toolbar-info {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+.missao-programacao-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.missao-select-count {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.missao-empty {
+  text-align: center;
+  padding: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.missao-painel-grid {
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 14px;
+}
+
+/* Polos em chips compactos (Fluent-style): sem borda, sem scroll
+   horizontal, uma linha só, nome + contagem lado a lado. */
+.missao-polo-cards-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.missao-polo-cards-row .polo-card {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: none;
+  border-radius: 999px;
+  background-color: var(--bg-tertiary);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.missao-polo-cards-row .polo-card:hover {
+  background-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+.missao-polo-cards-row .polo-card.selected {
+  background: linear-gradient(135deg, var(--accent) 0%, hsl(88, 51%, 40%) 100%);
+}
+.missao-polo-cards-row .polo-card.selected .polo-card-name,
+.missao-polo-cards-row .polo-card.selected .polo-card-stats {
+  color: #fff;
+}
+.missao-polo-cards-row .polo-card-header {
+  margin-bottom: 0;
+}
+.missao-polo-cards-row .polo-card-name {
+  font-size: 13px;
+}
+.missao-polo-cards-row .polo-card-stats {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+
+/* Painéis operacionais (Cidade/Equipe/Serviço) — visual de "ranking
+   operacional", não de relatório: linhas viram blocos com selo de posição e
+   número em destaque, com Top 3 em evidência (ouro/prata/bronze, maiores
+   que o restante). Escopado só a estes 3 contêineres — não altera
+   renderInsightList nem a tela Insights, que continuam com o layout antigo. */
+.missao-op-panel {
+  border: none;
+  box-shadow: var(--shadow-sm);
+}
+.missao-op-panel .missao-op-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  border-radius: var(--radius-md);
+  cursor: default;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.missao-op-panel .missao-op-row:hover {
+  transform: translateX(3px);
+  box-shadow: var(--shadow-sm);
+}
+.missao-op-rank {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.missao-op-name {
+  flex: 1 1 auto;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.missao-op-value {
+  flex: 0 0 auto;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* Top 3 em destaque */
+.missao-op-row.top1, .missao-op-row.top2, .missao-op-row.top3 {
+  padding: 14px 12px;
+}
+.missao-op-row.top1 .missao-op-rank,
+.missao-op-row.top2 .missao-op-rank,
+.missao-op-row.top3 .missao-op-rank {
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  background-color: var(--bg-secondary);
+}
+.missao-op-row.top1 .missao-op-name { font-size: 16px; font-weight: 800; }
+.missao-op-row.top1 .missao-op-value { font-size: 26px; }
+.missao-op-row.top1 { background: linear-gradient(135deg, rgba(212, 175, 55, 0.22) 0%, rgba(212, 175, 55, 0.06) 100%); }
+.missao-op-row.top2 { background: linear-gradient(135deg, rgba(154, 164, 178, 0.22) 0%, rgba(154, 164, 178, 0.06) 100%); }
+.missao-op-row.top3 { background: linear-gradient(135deg, rgba(181, 101, 29, 0.22) 0%, rgba(181, 101, 29, 0.06) 100%); }
 
 /* Gráfico de Status (Donut Simulado) */
 .chart-simulated-donut {
@@ -1033,14 +1488,15 @@ h1, h2, h3, h4, .outfit-font {
 }
 
 .sigis-card-value {
-  font-size: 28px;
+  font-size: 44px;
   font-weight: 700;
+  text-align: center;
 }
 
 .sigis-blue   { background-color: var(--brand-blue); }
 .sigis-gray   { background-color: #64748b; }
 .sigis-green  { background-color: var(--brand-green); }
-.sigis-red    { background-color: #45586b; }
+.sigis-red    { background-color: #dc2626; }
 .sigis-gold   { background-color: var(--brand-navy-dark); }
 .sigis-teal   { background-color: #0d9488; }
 
@@ -1150,48 +1606,6 @@ h1, h2, h3, h4, .outfit-font {
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
-
-/* Barra proporcional de pendentes dentro/fora do prazo */
-.pendentes-bar-wrap {
-  padding: 16px 4px;
-}
-
-.pendentes-bar {
-  display: flex;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.pendentes-bar-ok {
-  background-color: #8dc63f;
-  transition: width 0.4s;
-}
-
-.pendentes-bar-late {
-  background-color: #dc2626;
-  transition: width 0.4s;
-}
-
-.pendentes-bar-legend {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 12px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.legend-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin-right: 5px;
-  vertical-align: middle;
-}
-
-.legend-ok { background-color: #8dc63f; }
-.legend-late { background-color: #dc2626; }
 
 /* Visão por Polo em cards + painel lateral (tela OS a Vencer Hoje) */
 .polo-cards-layout {
@@ -1597,7 +2011,7 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
         </li>
         <li class="nav-item">
           <a href="#" class="nav-link" data-tab="vencehoje" id="nav-vencehoje">
-            <span class="nav-text">OS a Vencer Hoje</span>
+            <span class="nav-text">Missão Operacional</span>
           </a>
         </li>
         <li class="nav-item">
@@ -1610,7 +2024,13 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
             <span class="nav-text">Insights Operacionais</span>
           </a>
         </li>
-        <li class="nav-item">
+        <!-- Gestão de Backlog oculta da navegação (05/08/2026) — auditoria
+             confirmou nenhuma dependência exclusiva (ver COI_MASTER_PROJECT.md).
+             Página, função renderBacklog(), CSS e caso "backlog" do dispatcher
+             de abas permanecem 100% intactos no código — só a classe abaixo
+             esconde o item de menu. Para reativar: remover a classe
+             "nav-item-oculto" (ou a regra CSS correspondente). -->
+        <li class="nav-item nav-item-oculto">
           <a href="#" class="nav-link" data-tab="backlog" id="nav-backlog">
             <span class="nav-text">Gestão de Backlog</span>
           </a>
@@ -1627,6 +2047,25 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
         </li>
       </ul>
     </nav>
+
+    <!-- Seção ADMINISTRADOR (UX 05/08/2026): controles de importação/publicação
+         movidos do topbar para cá — ação administrativa não deveria disputar
+         espaço nobre da tela com os indicadores. Sem alterar publish.js: o
+         botão "Publicar no Site" continua sendo injetado via
+         document.querySelector(".import-control"), que agora aponta pra cá
+         (primeiro .import-control no DOM). -->
+    <div class="sidebar-admin-section admin-only">
+      <div class="sidebar-admin-label">Administrador</div>
+      <div class="import-control sidebar-import-controls">
+        <label class="import-btn" for="import-file-input">Importar Planilha</label>
+        <input type="file" id="import-file-input" accept=".xlsx,.xls" multiple hidden>
+        <span class="import-status" id="import-status">Nenhum arquivo importado</span>
+      </div>
+      <div class="import-control sidebar-import-controls">
+        <button type="button" class="import-btn" id="publicar-dados-btn" style="background-color: var(--brand-navy);">⬇ Baixar dados.json</button>
+      </div>
+    </div>
+
     <div class="sidebar-footer">
       <div class="session-badge" id="session-badge"><!-- preenchido via JS --></div>
       <div>Grupo AEGEA · Saneamento MS</div>
@@ -1637,19 +2076,11 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
 
   <!-- CONTEÚDO PRINCIPAL (BARRA SUPERIOR + TELAS) -->
   <main class="main-content">
-    
+
     <!-- BARRA SUPERIOR E FILTROS COMPARTILHADOS (FE-003 / RF-002) -->
     <header class="topbar">
       <div class="page-title">
         <h1 id="main-title">Ambiental MS Pantanal - C.O.I</h1>
-      </div>
-      <div class="import-control admin-only">
-        <label class="import-btn" for="import-file-input">Importar Planilha</label>
-        <input type="file" id="import-file-input" accept=".xlsx,.xls" multiple hidden>
-        <span class="import-status" id="import-status">Nenhum arquivo importado</span>
-      </div>
-      <div class="import-control admin-only">
-        <button type="button" class="import-btn" id="publicar-dados-btn" style="background-color: var(--brand-navy);">⬇ Baixar dados.json</button>
       </div>
       <div class="filter-bar">
         <div class="filter-group">
@@ -1659,7 +2090,7 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
             <option value="3d">Últimos 3 dias</option>
             <option value="7d">Últimos 7 dias</option>
             <option value="15d">Últimos 15 dias</option>
-            <option value="month">Este Mês (Julho)</option>
+            <option value="month">Este Mês</option>
           </select>
         </div>
         <div class="filter-group">
@@ -1812,6 +2243,7 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
             <tr>
               <th>Nº OS</th>
               <th>Cliente</th>
+              <th>Serviço</th>
               <th>Técnico</th>
               <th>Prioridade</th>
               <th>Status</th>
@@ -2027,50 +2459,98 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
       </div>
     </section>
 
-    <!-- TELA 6: OS A VENCER HOJE -->
+    <!-- TELA 6: MISSÃO OPERACIONAL (ex-"OS a Vencer Hoje") -->
     <section class="page-container" id="vencehoje-page">
 
-      <!-- Painel "Realidade do Momento" -->
-      <div class="sigis-grid sigis-grid-3" style="margin-bottom: 24px;">
-        <div class="sigis-card sigis-blue">
-          <span class="sigis-card-label">
-            Total a Vencer Hoje
-            <span class="info-tip">ⓘ<span class="info-tip-bubble"><strong>Regra:</strong> OS não concluídas cujo prazo (data_prazo) cai no dia de hoje (18/07/2026). Se não forem atendidas até o fim do dia, viram "Atrasadas" amanhã.</span></span>
-          </span>
-          <span class="sigis-card-value" id="vencehoje-total">0</span>
+      <!-- Centro de Operações — Missão do Dia: painel único, não um grid de
+           cards equivalentes. Responde em 3 segundos: quantas OS tem,
+           quantas faltam, qual polo, onde está o problema. -->
+      <div class="missao-control-hero">
+        <div class="missao-control-topbar">
+          <span class="missao-control-polo" id="missao-polo-nome">📍 —</span>
         </div>
-        <div class="sigis-card sigis-gray">
-          <span class="sigis-card-label">
-            Cidades Afetadas
-            <span class="info-tip">ⓘ<span class="info-tip-bubble"><strong>Regra:</strong> Quantidade de cidades distintas com pelo menos 1 OS vencendo hoje, considerando os filtros aplicados nesta tela.</span></span>
-          </span>
-          <span class="sigis-card-value" id="vencehoje-cidades">0</span>
+
+        <!-- KPIs operacionais — sem gauge/donut/percentual circular. 5
+             números grandes lado a lado, cada um com identidade de cor
+             própria. Atrasadas e Vencem Hoje reaproveitam isAtrasadaReal e
+             isVenceHoje, já existentes, sem alterar nenhuma regra. -->
+        <div class="missao-kpi-row">
+          <div class="missao-kpi missao-kpi-dia">
+            <div class="missao-kpi-label">OS do dia</div>
+            <div class="missao-kpi-value" id="missao-total">0</div>
+          </div>
+          <div class="missao-kpi missao-kpi-conc">
+            <div class="missao-kpi-label">Concluídas</div>
+            <div class="missao-kpi-value" id="missao-concluidas">0</div>
+          </div>
+          <div class="missao-kpi missao-kpi-pend">
+            <div class="missao-kpi-label">Aguardando Programação</div>
+            <div class="missao-kpi-value" id="missao-pendentes">0</div>
+          </div>
+          <div class="missao-kpi missao-kpi-venc">
+            <div class="missao-kpi-label">Vencem hoje</div>
+            <div class="missao-kpi-value" id="missao-vencem-hoje">0</div>
+          </div>
+          <div class="missao-kpi missao-kpi-atr">
+            <div class="missao-kpi-label">Atrasadas</div>
+            <div class="missao-kpi-value" id="missao-atrasadas">0</div>
+          </div>
         </div>
-        <div class="sigis-card sigis-gold">
-          <span class="sigis-card-label">
-            Cidade Mais Crítica
-            <span class="info-tip">ⓘ<span class="info-tip-bubble"><strong>Regra:</strong> Cidade com maior volume de OS vencendo hoje — prioridade natural de atendimento pra não virar atraso amanhã.</span></span>
-          </span>
-          <span class="sigis-card-value" id="vencehoje-cidade-critica" style="font-size: 18px;">-</span>
+
+        <!-- Andamento do dia — barra horizontal simples (não é gauge/donut),
+             % concluído já calculado por calcularMissaoStats. -->
+        <div class="missao-progresso-dia">
+          <div class="missao-progresso-dia-label">
+            Andamento do dia <strong id="missao-progresso-dia-pct">0%</strong>
+          </div>
+          <div class="missao-progresso-dia-track">
+            <div class="missao-progresso-dia-fill" id="missao-progresso-dia-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Onde está o problema + o que exige ação agora — cidade e serviço
+             com mais OS na Zona de Atenção (já filtrada abaixo). Sem frases
+             geradas, sem recomendação — só os 3 fatos: onde, o quê, quantas.
+             Botão "Ver OS" abre a mesma lista já usada pela pill Zona de
+             Atenção (mesmo dado, mesmo filtro, ação direta). -->
+        <div class="missao-problema-block" id="missao-problema-block">
+          <div class="missao-problema-title">🚨 ONDE ESTÁ O PROBLEMA</div>
+          <div class="missao-problema-body" id="missao-problema-body">
+            <span class="missao-problema-vazio">Nenhum problema crítico agora</span>
+          </div>
+        </div>
+
+        <div class="missao-control-status-row">
+          <button type="button" class="missao-status-pill" id="missao-zona-atencao-header" title="Disponível p/ coletor + vencendo hoje. Semáforo: 0 = verde · 1-5 = amarelo · 6+ = vermelho.">
+            ⚠️ Zona de Atenção <strong id="missao-zona-atencao-count">0</strong>
+          </button>
+          <button type="button" class="missao-status-pill" id="missao-aguardando-header" title="Status Gerada. Semáforo: 0 = verde · 1-20 = amarelo · 21+ = laranja.">
+            📋 Aguardando <strong id="missao-aguardando-count">0</strong>
+          </button>
         </div>
       </div>
 
-      <!-- Ranking Top 5 Cidades -->
-      <div class="chart-card" style="margin-bottom: 24px;">
-        <div class="chart-title">
-          📍 Top 5 Cidades — OS a Vencer Hoje
-          <span class="info-tip">ⓘ<span class="info-tip-bubble">Ranking das cidades com mais OS vencendo hoje (volume bruto). Ajuda a decidir onde concentrar equipes agora, antes que essas OS virem atrasadas.</span></span>
-        </div>
-        <div id="vencehoje-ranking-cidades"></div>
-      </div>
+      <!-- Cards de Polo (somente admin/gestor — usuário "polo" não vê, só existe o próprio polo) -->
+      <div class="polo-cards-grid missao-polo-cards-row" id="vencehoje-polo-cards"></div>
 
-      <!-- Ranking de Criticidade por Polo (%) -->
-      <div class="chart-card" style="margin-bottom: 24px;">
-        <div class="chart-title">
-          🎯 Onde Atuar Agora — Criticidade por Polo (%)
-          <span class="info-tip">ⓘ<span class="info-tip-bubble"><strong>Fórmula:</strong> (OS vencendo hoje no Polo ÷ Total de OS pendentes do Polo) × 100. Diferente do ranking por volume: aqui um Polo pequeno com proporção alta de vencimentos aparece à frente de um Polo grande com o mesmo total absoluto — indica onde o problema é proporcionalmente mais urgente.</span></span>
+      <!-- Listas expansíveis (abrem ao clicar no status correspondente) -->
+      <div class="missao-collapsible-body" id="missao-zona-atencao-body" style="display: none;"></div>
+      <div class="missao-collapsible-body" id="missao-aguardando-body" style="display: none;"></div>
+
+      <!-- Painel do Polo: Cidade / Equipe / Serviço em cards operacionais -->
+      <div class="charts-grid missao-painel-grid">
+        <div class="chart-card missao-op-panel">
+          <div class="chart-title">📍 Por Cidade</div>
+          <div id="painel-polo-cidade"></div>
         </div>
-        <div id="vencehoje-ranking-criticidade"></div>
+        <div class="chart-card missao-op-panel">
+          <div class="chart-title">👷 Por Equipe</div>
+          <div id="painel-polo-equipe"></div>
+        </div>
+        <div class="chart-card missao-op-panel">
+          <div class="chart-title">🔧 Por Serviço</div>
+          <div id="painel-polo-servico"></div>
+        </div>
       </div>
 
       <div class="table-card">
@@ -2090,28 +2570,38 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
           <select id="vencehoje-search-supervisor" style="display:none"></select>
         </div>
 
-        <!-- Visão 1 (padrão): cards por Polo + painel de resumo do Polo selecionado -->
-        <div id="vencehoje-polo-summary-table">
-          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Visão por Polo — clique num card
-            <span class="info-tip">ⓘ<span class="info-tip-bubble"><strong>Selos (taxa de atraso do polo = atrasadas ÷ pendentes):</strong> Crítico ≥ 20% · Atenção ≥ 8% · Estável &lt; 8%. Proporcional ao tamanho do polo — um polo pequeno com muito atraso relativo aparece como crítico mesmo com poucas OS.</span></span>
-          </p>
-          <div class="polo-cards-layout">
-            <div class="polo-cards-grid" id="vencehoje-polo-cards"></div>
-            <div class="polo-detail-panel" id="vencehoje-polo-detail">
-              <div style="text-align: center; padding: 30px 10px; color: var(--text-muted); font-size: 13px;">Selecione um Polo ao lado para ver o resumo e as OS.</div>
-            </div>
-          </div>
-        </div>
+        <!-- Visão 1 (padrão): cards de Polo, Missão, Zona/Aguardando e Painel do
+             Polo ficam sempre visíveis acima (fora do table-card); este bloco só
+             controla a visibilidade do bloco "drill-down" (Visão 2) abaixo. -->
+        <div id="vencehoje-polo-summary-table"></div>
 
-        <!-- Visão 2 (drill-down): lista de OS do Polo selecionado -->
+        <!-- Visão 2 (drill-down): lista de OS do Polo selecionado — agora com
+             seleção/equipe/envio direto (unificação da jornada operacional,
+             05/08/2026). Reaproveita missao-select-os / missao-equipe-input /
+             wireProgramacaoToolbar / gerarListaProgramacao /
+             marcarOSEnviadasProgramacao — ver Master Project. -->
+        <div class="missao-programacao-toolbar" id="vencehoje-programacao-toolbar" style="display: none;">
+          <label class="missao-toolbar-item">
+            Nova equipe
+            <input type="text" id="vencehoje-nova-equipe" placeholder="Ex: Equipe 7201">
+          </label>
+          <button type="button" class="import-btn" id="vencehoje-add-equipe-btn">+ Cadastrar</button>
+          <span class="missao-toolbar-info" id="vencehoje-toolbar-info"></span>
+          <span class="missao-programacao-actions">
+            <span class="missao-select-count" id="vencehoje-select-count">0 selecionadas</span>
+            <button type="button" class="import-btn" id="vencehoje-enviar-btn" disabled>Enviar para Programação</button>
+          </span>
+        </div>
         <table class="coi-table" id="vencehoje-os-list-table" style="display: none;">
           <thead>
             <tr>
+              <th></th>
               <th>Nº OS</th>
               <th>Cidade</th>
               <th>Polo</th>
               <th>Supervisor</th>
               <th>Serviço</th>
+              <th>Equipe</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -2129,7 +2619,8 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
 
     <!-- TELA 7: INDICADORES CONTRATUAIS (estilo SIGIS) -->
     <section class="page-container active" id="contratuais-page">
-      <h2 style="font-size: 18px; color: var(--text-primary); margin-bottom: 16px;">Indicador de Eficiência no Atendimento (IEA)</h2>
+      <h2 style="font-size: 18px; color: var(--text-primary); margin-bottom: 4px;">Indicador de Eficiência no Atendimento (IEA)</h2>
+      <p id="contratuais-referencia" style="font-size: 13px; color: var(--text-muted); margin: 0 0 16px;">Referência: —</p>
       <div class="sigis-grid">
         <div class="sigis-card sigis-blue">
           <span class="sigis-card-label">Total OS's Emitidas - QT<span class="info-tip">ⓘ<span class="info-tip-bubble">Total de OS na base importada, de qualquer status.</span></span></span>
@@ -2140,7 +2631,7 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
           <span class="sigis-card-value" id="sigis-baixadas">0</span>
         </div>
         <div class="sigis-card sigis-green">
-          <span class="sigis-card-label">Baixadas no Prazo - QA<span class="info-tip">ⓘ<span class="info-tip-bubble">Das OS baixadas, quantas foram concluídas dentro do prazo (usa Status Prazo da planilha, ou compara datas quando esse campo não define).</span></span></span>
+          <span class="sigis-card-label">Baixadas no Prazo - QA<span class="info-tip">ⓘ<span class="info-tip-bubble">Das OS baixadas, quantas foram concluídas dentro do prazo contratual, calculado pelo código do serviço: Ligação 10 dias úteis · Desobstrução 24h · Reposição 5 dias úteis (7 em Três Lagoas/Ponta Porã/Douradina/Fátima do Sul). Compara a data de conclusão com esse prazo.</span></span></span>
           <span class="sigis-card-value" id="sigis-qa">0</span>
         </div>
         <div class="sigis-card sigis-red">
@@ -2150,41 +2641,28 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
       </div>
       <div class="sigis-grid" style="margin-top: 16px;">
         <div class="sigis-card sigis-gold">
-          <span class="sigis-card-label">IEA Parcial<span class="info-tip">ⓘ<span class="info-tip-bubble"><strong>Fórmula oficial</strong> (Tabela 8, 4º Termo Aditivo): SE (QA/Baixadas ≥ X) ENTÃO IEA=100%; SENÃO IEA=QA/Baixadas. X=0,95 (contrato no ano 6+).</span></span></span>
+          <span class="sigis-card-label">IEA Apurado<span class="info-tip">ⓘ<span class="info-tip-bubble"><strong>Fórmula oficial</strong> (Tabela 8, 4º Termo Aditivo): SE (QA/Baixadas ≥ X) ENTÃO IEA=100%; SENÃO IEA=QA/Baixadas. X=0,95 (contrato no ano 6+).</span></span></span>
           <span class="sigis-card-value" id="sigis-iea">0%</span>
         </div>
-        <div class="sigis-card sigis-green">
+        <div class="sigis-card sigis-gray">
           <span class="sigis-card-label">Tempo Médio Desobstrução (OS Executada)<span class="info-tip">ⓘ<span class="info-tip-bubble">Média de (data de conclusão − data de abertura) das OS de Desobstrução concluídas, em horas. Prazo contratual: 24h. Amostra pequena pode ser sinalizada com "(n=X)".</span></span></span>
           <span class="sigis-card-value" id="sigis-tempo-desob">-</span>
         </div>
-        <div class="sigis-card sigis-green">
+        <div class="sigis-card sigis-gray">
           <span class="sigis-card-label">Tempo Médio Ligação (OS Executada)<span class="info-tip">ⓘ<span class="info-tip-bubble">Média de (data de conclusão − data de abertura) das OS de Ligação de Esgoto concluídas, em dias. Prazo contratual: 10 dias úteis.</span></span></span>
           <span class="sigis-card-value" id="sigis-tempo-ligacao">-</span>
         </div>
-        <div class="sigis-card sigis-green">
+        <div class="sigis-card sigis-gray">
           <span class="sigis-card-label">Tempo Médio Reposição (OS Executada)<span class="info-tip">ⓘ<span class="info-tip-bubble">Média de (data de conclusão − data de abertura) das OS de Reposição/Recomposição concluídas, em dias. Prazo contratual: 5 dias úteis (7 dias em Três Lagoas/Ponta Porã/Douradina/Fátima do Sul).</span></span></span>
           <span class="sigis-card-value" id="sigis-tempo-reposicao">-</span>
         </div>
       </div>
 
-      <h2 style="font-size: 18px; color: var(--text-primary); margin: 28px 0 16px;">OS's Pendentes (ainda não baixadas)</h2>
-      <div class="sigis-grid sigis-grid-3">
-        <div class="sigis-card sigis-teal">
-          <span class="sigis-card-label">Total OS's Pendentes<span class="info-tip">ⓘ<span class="info-tip-bubble">OS que não estão Concluídas nem Canceladas — ainda em aberto na operação.</span></span></span>
-          <span class="sigis-card-value" id="sigis-pend-total">0</span>
-        </div>
-        <div class="sigis-card sigis-green">
-          <span class="sigis-card-label">Dentro do Prazo<span class="info-tip">ⓘ<span class="info-tip-bubble">Das pendentes, quantas ainda não passaram do prazo calculado (data_prazo ≥ hoje).</span></span></span>
-          <span class="sigis-card-value" id="sigis-pend-noprazo">0</span>
-        </div>
-        <div class="sigis-card sigis-red">
-          <span class="sigis-card-label">Fora do Prazo (Vencidas)<span class="info-tip">ⓘ<span class="info-tip-bubble">Das pendentes, quantas já passaram do prazo calculado (data_prazo &lt; hoje) — mesmo critério da tela "OS Atrasadas".</span></span></span>
-          <span class="sigis-card-value" id="sigis-pend-vencidas">0</span>
-        </div>
-      </div>
-
-      <!-- Painel Visual (medidor IEA + situações + proporção de pendentes) -->
-      <div class="charts-grid" style="margin-top: 28px;">
+      <!-- Painel Visual (medidor IEA + situações) — indicadores de
+           Pendências/Vencidas removidos desta tela (não participam do
+           cálculo do IEA); já existem no Dashboard Executivo ("OS em
+           Atraso"/"Backlog Acumulado") e na Gestão de Backlog. -->
+      <div class="charts-grid contratuais-charts-grid" style="margin-top: 28px;">
         <div class="chart-card">
           <div class="chart-title">🎯 IEA vs Meta Contratual
             <span class="info-tip">ⓘ<span class="info-tip-bubble">O anel mostra a razão QA/Baixadas. A meta contratual é X=0,95: atingindo ou passando dela, o IEA vale 1,00 (nota máxima).</span></span>
@@ -2193,7 +2671,6 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
             <div class="iea-gauge" id="iea-gauge">
               <div class="iea-gauge-center">
                 <span class="iea-gauge-value" id="iea-gauge-value">0%</span>
-                <span class="iea-gauge-label">de 95% (meta)</span>
               </div>
             </div>
           </div>
@@ -2203,21 +2680,6 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
             <span class="info-tip">ⓘ<span class="info-tip-bubble">Distribuição das OS importadas por situação (Aberta, Em Andamento, Concluída, Cancelada) — visão equivalente ao gráfico de situações do SIGIS.</span></span>
           </div>
           <div id="contratuais-situacoes-chart"></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-title">⏳ Pendentes: Dentro × Fora do Prazo
-            <span class="info-tip">ⓘ<span class="info-tip-bubble">Proporção das OS pendentes que ainda estão dentro do prazo (verde) versus as já vencidas (vermelho). Quanto maior a faixa vermelha, maior o risco imediato no indicador.</span></span>
-          </div>
-          <div class="pendentes-bar-wrap" id="pendentes-bar-wrap">
-            <div class="pendentes-bar">
-              <div class="pendentes-bar-ok" id="pendentes-bar-ok" style="width: 100%;"></div>
-              <div class="pendentes-bar-late" id="pendentes-bar-late" style="width: 0%;"></div>
-            </div>
-            <div class="pendentes-bar-legend">
-              <span><span class="legend-dot legend-ok"></span> Dentro do prazo: <strong id="pendentes-legend-ok">0</strong></span>
-              <span><span class="legend-dot legend-late"></span> Vencidas: <strong id="pendentes-legend-late">0</strong></span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -2561,6 +3023,7 @@ window.COIDatabase = COIDatabase;
 (function () {
   const STORAGE_KEY = "coi_db";
   const BASE_STORAGE_KEY = "coi_base_regional";
+  const HISTORICA_STORAGE_KEY = "coi_base_historica";
 
   // Base de Regionais embutida (Cidade → Polo/Supervisor/Regional).
   // Gerada a partir do arquivo Base_Polos.xls — 70 cidades do MS.
@@ -2747,7 +3210,15 @@ window.COIDatabase = COIDatabase;
     });
   }
 
+  // Correção 5 (30/07/2026): opera sobre window.COIDatabaseFull (fonte
+  // canônica), nunca sobre window.COIDatabase (visão). Persiste em
+  // localStorage real e recalcula a visão da sessão ao final.
   function reaplicarRegionalNoBancoAtual(regionalRows) {
+    if (typeof window.COIAuth?.isAdmin === "function" && !window.COIAuth.isAdmin()) {
+      console.warn("reaplicarRegionalNoBancoAtual: operação administrativa bloqueada — sessão atual não é admin.");
+      return;
+    }
+    if (!window.COIDatabaseFull) return;
     const lookup = new Map();
     if (regionalRows && regionalRows.length > 0) {
       regionalRows.forEach((r) => {
@@ -2758,19 +3229,153 @@ window.COIDatabase = COIDatabase;
     } else {
       Object.entries(BASE_REGIONAL_EMBUTIDA).forEach(([cidade, dados]) => lookup.set(cidade, dados));
     }
-    window.COIDatabase.os.forEach((os) => {
+    let alterou = false;
+    window.COIDatabaseFull.os.forEach((os) => {
       const found = lookup.get(String(os.municipio).trim().toUpperCase());
       if (found) {
+        if (os.polo !== found.polo || os.supervisor !== found.supervisor || os.regional !== found.regional) alterou = true;
         os.polo = found.polo;
         os.supervisor = found.supervisor;
         os.regional = found.regional;
       }
     });
+    if (alterou) window.COIDatabaseFull.atualizadoEm = new Date().toISOString();
     try {
-      memStorage.setItem(STORAGE_KEY, JSON.stringify(window.COIDatabase));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(window.COIDatabaseFull));
     } catch (err) {
-      console.warn("Não foi possível salvar em memStorage:", err);
+      console.warn("Não foi possível salvar em localStorage:", err);
     }
+    if (typeof window.COIRecalcularVisaoSessao === "function") window.COIRecalcularVisaoSessao();
+  }
+
+  // ---------------------------------------------------------------
+  // Sprint COI-16 — Separação Operacional / IEA
+  // A planilha do SIGIS já vem separada por natureza: um arquivo traz
+  // só OS "Baixada (Encerrada)" (IEA), outro traz as situações
+  // operacionais (Gerada/Emitida/Agendada/Programada/Em Execução/
+  // Disponível para Coletor). A detecção usa exclusivamente o
+  // conteúdo da coluna "Situacao Os" — nunca código de serviço, SLA
+  // ou "Status Prazo".
+  // ---------------------------------------------------------------
+
+  // 100% das linhas com "Baixada (Encerrada)" -> iea; qualquer outra
+  // situação (mesmo que misto) -> operacional.
+  function detectarTipoRelatorio(osRows) {
+    if (!osRows || osRows.length === 0) return "operacional";
+    const todasBaixadas = osRows.every((r) => {
+      const situacao = r["Situacao Os"] != null ? String(r["Situacao Os"]).trim() : "";
+      return situacao === "Baixada (Encerrada)";
+    });
+    return todasBaixadas ? "iea" : "operacional";
+  }
+
+  function criarEstruturaVazia() {
+    return { clientes: [], tecnicos: [], tiposServico: [], os: [], historicoStatus: [] };
+  }
+
+  // Garante que window.COIDatabaseFull esteja no formato {operacional, iea}.
+  // Se ainda for o formato antigo (achatado, direto em .clientes/.os/...),
+  // migra o conteúdo existente para dentro de "operacional" sem perder nada.
+  // Correção 2/4 (30/07/2026): passou a operar sobre window.COIDatabaseFull
+  // (fonte canônica), nunca sobre window.COIDatabase (visão derivada).
+  function garantirEstruturaSeparada() {
+    if (!window.COIDatabaseFull) {
+      window.COIDatabaseFull = { operacional: criarEstruturaVazia(), iea: criarEstruturaVazia() };
+      return;
+    }
+    if (!window.COIDatabaseFull.operacional || !window.COIDatabaseFull.iea) {
+      const legado = {
+        clientes: window.COIDatabaseFull.clientes || [],
+        tecnicos: window.COIDatabaseFull.tecnicos || [],
+        tiposServico: window.COIDatabaseFull.tiposServico || [],
+        os: window.COIDatabaseFull.os || [],
+        historicoStatus: window.COIDatabaseFull.historicoStatus || []
+      };
+      window.COIDatabaseFull = {
+        operacional: window.COIDatabaseFull.operacional || legado,
+        iea: window.COIDatabaseFull.iea || criarEstruturaVazia()
+      };
+    }
+  }
+
+  // Compatibilidade total: window.COIDatabase.os/.clientes/.tecnicos/
+  // .tiposServico/.historicoStatus continuam existindo como a UNIÃO de
+  // operacional + iea, para nada em app.js precisar mudar.
+  function instalarGettersCompatibilidade(db) {
+    ["clientes", "tecnicos", "tiposServico", "os", "historicoStatus"].forEach((campo) => {
+      Object.defineProperty(db, campo, {
+        get() {
+          const op = (db.operacional && db.operacional[campo]) || [];
+          const ie = (db.iea && db.iea[campo]) || [];
+          return [...op, ...ie];
+        },
+        enumerable: true,
+        configurable: true
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // Base Histórica — Sprint COI-18 (30/07/2026)
+  // Estrutura independente de window.COIDatabase, criada para acumular
+  // OS encerradas ao longo do tempo sem depender da substituição total
+  // que a importação operacional/iea aplica hoje. Não é lida por nenhum
+  // cálculo de IEA, dashboard ou tela operacional — puramente aditiva.
+  // Chave composta (Decisão nº 14 do MASTER): Nº OS + Código de Serviço,
+  // usando só campos imutáveis. Regra de upsert restrita a INSERE: se a
+  // chave já existe, o registro é ignorado (OS encerrada não muda).
+  // Usa localStorage real (não memStorage) deliberadamente: o objetivo
+  // da Base Histórica é sobreviver a reloads, diferente do restante do
+  // armazenamento inline de index.html.
+  // ---------------------------------------------------------------
+  // Fórmula única e canônica da chave composta (Decisão nº 14 / P4):
+  // Nº OS + Código de Serviço, só campos imutáveis (datas nunca entram).
+  function chaveOS(numOS, codigoServico) {
+    const num = String(numOS != null ? numOS : "").replace(/\D/g, "");
+    const cod = codigoServico != null ? codigoServico : "SEM_CODIGO";
+    return `${num}|${cod}`;
+  }
+
+  function chaveHistorica(os) {
+    return chaveOS(os.id_os, os.id_tipo_servico);
+  }
+
+  function carregarBaseHistorica() {
+    if (window.COIBaseHistorica) return window.COIBaseHistorica;
+    let carregada = null;
+    try {
+      const saved = localStorage.getItem(HISTORICA_STORAGE_KEY);
+      if (saved) carregada = JSON.parse(saved);
+    } catch (err) {
+      console.warn("Não foi possível carregar a Base Histórica salva:", err);
+    }
+    window.COIBaseHistorica = carregada || { os: {}, ultimaImportacao: null };
+    return window.COIBaseHistorica;
+  }
+
+  // Mescla as OS encerradas do arquivo importado na Base Histórica.
+  // Existe na base -> IGNORA (nunca sobrescreve). Não existe -> INSERE.
+  function mergeBaseHistorica(osArray) {
+    const base = carregarBaseHistorica();
+    let adicionados = 0;
+    let ignorados = 0;
+    (osArray || []).forEach((os) => {
+      const chave = chaveHistorica(os);
+      if (base.os[chave]) {
+        ignorados++;
+        return;
+      }
+      base.os[chave] = { ...os, _importado_em: new Date().toISOString() };
+      adicionados++;
+    });
+    base.ultimaImportacao = new Date().toISOString();
+    try {
+      localStorage.setItem(HISTORICA_STORAGE_KEY, JSON.stringify(base));
+    } catch (err) {
+      console.warn("Não foi possível salvar a Base Histórica:", err);
+    }
+    console.log(`Base Histórica: +${adicionados} nova(s), ${ignorados} já existente(s) (ignorada(s)), total acumulado: ${Object.keys(base.os).length}`);
+    return { adicionados, ignorados, total: Object.keys(base.os).length };
   }
 
   // ---------------------------------------------------------------
@@ -2781,6 +3386,19 @@ window.COIDatabase = COIDatabase;
   // ---------------------------------------------------------------
   async function handleFileSelection(fileList) {
     const statusEl = document.getElementById("import-status");
+
+    // Correção 4 (30/07/2026): validação funcional de admin — não apenas CSS.
+    if (typeof window.COIAuth?.isAdmin === "function" && !window.COIAuth.isAdmin()) {
+      const msg = "Acesso negado: importação disponível apenas para administradores.";
+      if (statusEl) {
+        statusEl.textContent = msg;
+        statusEl.classList.add("import-status-warning");
+      } else {
+        alert(msg);
+      }
+      return;
+    }
+
     if (statusEl) statusEl.textContent = "Lendo arquivo(s)...";
 
     let osRows = null;
@@ -2817,9 +3435,9 @@ window.COIDatabase = COIDatabase;
       } catch (err) {
         console.warn("Não foi possível salvar Base de Regionais:", err);
       }
-      // Se já existe uma base de OS carregada e não veio um novo arquivo
+      // Se já existe uma base integral carregada e não veio um novo arquivo
       // de OS junto, só atualiza o cruzamento de Polo/Supervisor nela.
-      if (!osRows && window.COIDatabase && window.COIDatabase.os && window.COIDatabase.os.length > 0) {
+      if (!osRows && window.COIDatabaseFull && window.COIDatabaseFull.os && window.COIDatabaseFull.os.length > 0) {
         reaplicarRegionalNoBancoAtual(regionalRows);
       }
     }
@@ -2834,23 +3452,42 @@ window.COIDatabase = COIDatabase;
       }
     }
 
-    // Processa a planilha de OS, se veio alguma
+    // Processa a planilha de OS, se veio alguma.
+    // Correção 4 (30/07/2026): a importação trabalha exclusivamente sobre
+    // window.COIDatabaseFull (fonte canônica) — nunca sobre window.COIDatabase
+    // (visão). Preserva a categoria não importada (Decisão nº 16). Ao final,
+    // persiste a base integral e recalcula a visão da sessão via
+    // applyPoloFilter — nunca faz window.COIDatabaseFull = window.COIDatabase.
+    let tipoDetectado = null;
     if (osRows) {
+      tipoDetectado = detectarTipoRelatorio(osRows);
       const db = buildDatabaseFromRows(osRows, regionalRows || []);
-      db.atualizadoEm = new Date().toISOString();
-      window.COIDatabase = db;
-      window.COIDatabaseFull = db;
-      if (typeof window.atualizarSeloDados === "function") window.atualizarSeloDados();
+      garantirEstruturaSeparada();
+      window.COIDatabaseFull[tipoDetectado] = db;
+      window.COIDatabaseFull.atualizadoEm = new Date().toISOString();
+      instalarGettersCompatibilidade(window.COIDatabaseFull);
+      window.COIBaseIndisponivel = false;
       try {
-        memStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(window.COIDatabaseFull));
       } catch (err) {
-        console.warn("Não foi possível salvar em memStorage:", err);
+        console.warn("Não foi possível salvar em localStorage:", err);
+      }
+      if (typeof window.COIRecalcularVisaoSessao === "function") window.COIRecalcularVisaoSessao();
+      if (typeof window.atualizarSeloDados === "function") window.atualizarSeloDados();
+      // Base Histórica: só acumula em importações de encerradas (tipo "iea").
+      // Não interfere em window.COIDatabaseFull/COIDatabase nem em nenhum
+      // cálculo existente. Não alterada nesta etapa.
+      if (tipoDetectado === "iea") {
+        mergeBaseHistorica(db.os);
       }
     }
 
     // Monta a mensagem de status final
     const partes = [];
-    if (osRows) partes.push(`Arquivo: ${osFileName} | Registros: ${window.COIDatabase.os.length}`);
+    if (osRows) {
+      const rotulo = tipoDetectado === "iea" ? "IEA (Baixada/Encerrada)" : "Operacional";
+      partes.push(`Arquivo: ${osFileName} (${rotulo}) | Registros no arquivo: ${window.COIDatabaseFull[tipoDetectado].os.length} | Total geral: ${window.COIDatabaseFull.os.length}`);
+    }
     if (regionalRows && regionalRows.length > 0) partes.push(`Base de Regionais: ${regionalRows.length} cidades (importada)`);
     else if (osRows) partes.push(`Base de Regionais: 70 cidades (embutida)`);
     if (!osRows && !regionalRows) partes.push("Nenhum arquivo reconhecido (esperado: coluna \"Nº OS\" ou \"Cidade nome\")");
@@ -2882,7 +3519,9 @@ window.COIDatabase = COIDatabase;
     const clientesMap = new Map();
     const tecnicosMap = new Map();
     const tiposServicoMap = new Map();
-    const osList = [];
+    const osMap = new Map();
+    let linhasLidas = 0;
+    let duplicatas = 0;
 
     // Lookup Cidade -> {polo, coordenacao, supervisor, regional}
     // Usa a base importada se disponível; senão usa a embutida (fallback automático).
@@ -2909,6 +3548,7 @@ window.COIDatabase = COIDatabase;
     rows.forEach((r) => {
       const numOS = r["Nº OS"];
       if (numOS === null || numOS === undefined || numOS === "") return; // linha sem OS válida
+      linhasLidas++;
 
       const matricula = r["Matricula"] != null ? String(r["Matricula"]) : "SEM_MATRICULA";
       const equipeCodigo = r["Equipe Programada"] != null ? parseInt(r["Equipe Programada"], 10) : 0;
@@ -2989,7 +3629,9 @@ window.COIDatabase = COIDatabase;
       const dataExecProgCli = parseExcelDate(r["Data Exec Prog Cli"]);
       const dataInicioExec = parseExcelDate(r["Data Inicio Exec Os"]);
 
-      osList.push({
+      const chave = chaveOS(numOS, codigoServico);
+      if (osMap.has(chave)) duplicatas++;
+      osMap.set(chave, {
         id_os: numOS,
         numero_os: `OS-${numOS}`,
         id_cliente: matricula,
@@ -3019,27 +3661,27 @@ window.COIDatabase = COIDatabase;
       });
     });
 
+    console.log(`Importação (chave composta Nº OS|Código): ${linhasLidas} linha(s) lida(s) → ${osMap.size} registro(s) único(s) (${duplicatas} duplicata(s) eliminada(s))`);
+
     return {
       clientes: Array.from(clientesMap.values()),
       tecnicos: Array.from(tecnicosMap.values()),
       tiposServico: Array.from(tiposServicoMap.values()),
-      os: osList,
+      os: Array.from(osMap.values()),
       historicoStatus: []
     };
   }
 
   // ---------------------------------------------------------------
-  // Carrega dados salvos (se existirem) ANTES do app.js inicializar,
-  // já que os scripts executam em ordem: database.js -> import.js -> app.js
+  // Correção 1/2 (30/07/2026): a leitura de localStorage["coi_db"] e a
+  // reconciliação com ./dados.json passaram a ocorrer no bloco de LOGIN
+  // (função resolverBaseInicial), pois só ali as duas fontes (local e
+  // remota) estão disponíveis ao mesmo tempo. Este bloco não atribui
+  // mais window.COIDatabase diretamente — isso violaria a arquitetura
+  // vigente (COIDatabase é sempre uma visão derivada de COIDatabaseFull
+  // via applyPoloFilter). memStorage.getItem/setItem(STORAGE_KEY) foram
+  // removidos deste ponto; a persistência real agora usa localStorage.
   // ---------------------------------------------------------------
-  try {
-    const saved = memStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      window.COIDatabase = JSON.parse(saved);
-    }
-  } catch (err) {
-    console.warn("Não foi possível carregar dados salvos:", err);
-  }
 
   // ---------------------------------------------------------------
   // Liga o botão/input de importação assim que o DOM estiver pronto
@@ -3048,8 +3690,17 @@ window.COIDatabase = COIDatabase;
     const fileInput = document.getElementById("import-file-input");
     const statusEl = document.getElementById("import-status");
 
-    if (window.COIDatabase && memStorage.getItem(STORAGE_KEY) && statusEl) {
-      let msg = `Registros: ${window.COIDatabase.os.length} (importação anterior)`;
+    // Checagem cosmética de status (não decide nada): lê localStorage com
+    // segurança, sem depender de window.COIDatabaseFull ainda existir
+    // (a reconciliação real só roda depois, no bloco de LOGIN).
+    let baseLocalPresente = false;
+    try {
+      baseLocalPresente = !!localStorage.getItem(STORAGE_KEY);
+    } catch (err) {
+      console.warn("Não foi possível checar coi_db em localStorage:", err);
+    }
+    if (baseLocalPresente && statusEl) {
+      let msg = "Base local salva encontrada — será conciliada com a versão publicada após o login.";
       let semRegional = true;
       try {
         const cachedBase = memStorage.getItem(BASE_STORAGE_KEY);
@@ -3071,12 +3722,26 @@ window.COIDatabase = COIDatabase;
     }
   });
 
-  window.COIImport = { handleFileSelection, buildDatabaseFromRows };
+  window.COIImport = { handleFileSelection, buildDatabaseFromRows, garantirEstruturaSeparada, instalarGettersCompatibilidade };
 })();
 
 // Lógica de Negócio e Controle da SPA (Central de Operações Integradas)
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Configuração única de tempo do sistema (P5).
+  // Alternar "modo" aqui é a ÚNICA mudança necessária para trocar entre
+  // Data Real (produção) e Data Simulada (teste/homologação).
+  const COI_TIME_CONFIG = {
+    modo: "SIMULACAO",              // "PRODUCAO" | "SIMULACAO"
+    dataSimulada: "2026-07-20T00:00:00Z"  // usada somente quando modo === "SIMULACAO"
+  };
+
+  function obterHoraAtualSistema() {
+    return COI_TIME_CONFIG.modo === "PRODUCAO"
+      ? new Date()
+      : new Date(COI_TIME_CONFIG.dataSimulada);
+  }
+
   // Estado Global da Aplicação
   const state = {
     activeTab: "contratuais",
@@ -3090,8 +3755,13 @@ document.addEventListener("DOMContentLoaded", () => {
     atrasadasPage: 1,
     vencehojePage: 1,
     vencehojeSelectedPolo: null,
+    vencehojePainelCriterio: "cidade",
+    // Filtro de vencimento da fila de Programação. Vazio = só o que vence
+    // até hoje (evita listar meses inteiros de uma vez); ao escolher uma
+    // data futura no calendário, amplia a janela até aquela data.
+    missaoProgramacaoDataLimite: "",
     // Referência de tempo oficial do sistema
-    currentSystemTime: new Date("2026-07-20T00:00:00Z"),
+    currentSystemTime: obterHoraAtualSistema(),
     selectedOSId: null
   };
 
@@ -3125,6 +3795,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const CODIGOS_DESOBSTRUCAO_SLA = new Set([43000,43001,43002,43100,61400,61600]);
   const CODIGOS_REPOSICAO_SLA = new Set([99550,99551,99552,99553,99554,99555,99556,99557]);
   const CODIGOS_SEM_PRAZO_FORMAL = new Set([44291, 60700, 61800]);
+  // Códigos por categoria (Tabela 8 do 4º Termo Aditivo) — usados pela tela
+  // Indicadores Contratuais para agrupar o Tempo Médio por tipo de serviço.
+  // Declarados aqui (antes de renderAll() na inicialização) para evitar
+  // ReferenceError de TDZ, já que "contratuais" é a aba padrão do sistema.
+  const CODIGOS_LIGACAO = new Set([14110,14114,14115,14170,14210,14320,14410,14420,14510,14520,14610,14620,14710,14721,14810,14820,15010,15020]);
+  const CODIGOS_DESOBSTRUCAO = new Set([43000,43001,43002,43100,44291,60700,61400,61600,61800]);
+  const CODIGOS_REPOSICAO = new Set([99550,99551,99552,99553,99554,99555,99556,99557]);
   // Serviços contratualmente elegíveis para o IEA (35 códigos oficiais).
   // Só estes contam no QT/QA — fiscalizações, análises e pesquisas ficam fora.
   const CODIGOS_IEA = new Set([
@@ -3188,6 +3865,32 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
 
+  // Único ponto de verdade para "essa data está dentro do período
+  // selecionado no filtro global?" (Todo o histórico / 3d / 7d / 15d / Este
+  // Mês). Usado por getFilteredOSList() e por Indicadores Contratuais —
+  // antes eram duas implementações separadas e divergentes (uma delas
+  // tinha o mês travado em julho/2026); agora ambas chamam esta função,
+  // que calcula "Este Mês" dinamicamente a partir de "agora".
+  function dataEstaNoPeriodo(dt, periodo, agora) {
+    if (!dt) return false;
+    const d = dt instanceof Date ? dt : new Date(dt);
+    if (isNaN(d.getTime())) return false;
+    if (!periodo || periodo === "all") return true;
+    if (periodo === "month") return chaveMes(d) === chaveMes(agora);
+    const dias = periodo === "3d" ? 3 : periodo === "7d" ? 7 : periodo === "15d" ? 15 : null;
+    if (dias === null) return chaveMes(d) === chaveMes(agora);
+    const diff = (agora - d) / (1000 * 3600 * 24);
+    return diff >= 0 && diff <= dias;
+  }
+
+  // Remove acentos para comparação de texto tolerante — o nome do serviço
+  // vem cru da planilha SIGIS (import.js) e pode ou não ter acentuação;
+  // sem isso, buscar "reposição" (com acento) não batia com uma base
+  // exportada sem acento, e a busca falhava silenciosamente.
+  function normalizarTexto(txt) {
+    return String(txt || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  }
+
   // Uma OS é considerada "Atrasada" quando:
   // 1. Não está Concluída nem Cancelada (inclusive checa o texto ORIGINAL
   //    da planilha — se contém "baixad/executad/concluíd/finalizad", NÃO
@@ -3221,23 +3924,42 @@ document.addEventListener("DOMContentLoaded", () => {
   initFilters();
   renderAll();
 
-  // Esconde a barra de filtros globais já na carga inicial se a tela ativa
-  // por padrão (Indicadores Contratuais) não usa esses filtros — antes só
-  // era escondida ao clicar em outra aba, então aparecia indevidamente aqui.
-  (function () {
+  // Único ponto que decide visibilidade dos filtros globais por tela —
+  // evita duplicar a mesma lista/lógica em dois lugares (init + navegação).
+  // Indicadores Contratuais é caso especial: Período afeta os indicadores
+  // (QT/Baixadas/QA/IEA), mas Prioridade e Supervisor não têm nenhum efeito
+  // ali — escondê-los evita o usuário achar que os números mudaram quando
+  // na prática continuam iguais.
+  function atualizarVisibilidadeFiltros(tabId) {
     const filterBar = document.querySelector(".topbar .filter-bar");
+    if (!filterBar) return;
     const telasSemFiltroGlobal = ["atrasadas", "vencehoje"];
-    if (filterBar && telasSemFiltroGlobal.includes(state.activeTab)) {
-      filterBar.style.display = "none";
-    }
-  })();
+    filterBar.style.display = telasSemFiltroGlobal.includes(tabId) ? "none" : "";
+
+    const prioridadeGroup = document.getElementById("filter-priority")?.closest(".filter-group");
+    const supervisorGroup = document.getElementById("filter-supervisor")?.closest(".filter-group");
+    const esconderPrioridadeSupervisor = tabId === "contratuais";
+    if (prioridadeGroup) prioridadeGroup.style.display = esconderPrioridadeSupervisor ? "none" : "";
+    if (supervisorGroup) supervisorGroup.style.display = esconderPrioridadeSupervisor ? "none" : "";
+  }
+
+  // Aplica já na carga inicial, para a tela ativa por padrão (Indicadores
+  // Contratuais) — antes só era aplicado ao clicar em outra aba.
+  atualizarVisibilidadeFiltros(state.activeTab);
 
   // Popular selects com dados reais — chamado após cada importação
   function popularFiltros() {
-    if (!window.COIDatabase || !Array.isArray(window.COIDatabase.os)) return;
+    // Rótulo de "Este Mês" dinâmico (Fase 2: antes ficava fixo em "Julho").
+    const monthOption = document.querySelector('#filter-period option[value="month"]');
+    if (monthOption) {
+      const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      monthOption.textContent = `Este Mês (${meses[state.currentSystemTime.getUTCMonth()]})`;
+    }
+
+    if (!window.COIDatabase || !Array.isArray(window.COIDatabase.operacional?.os)) return;
     const polos = new Set();
     const supervisores = new Set();
-    window.COIDatabase.os.forEach(os => {
+    (window.COIDatabase.operacional?.os || []).forEach(os => {
       if (os.polo && os.polo !== "#N/A" && os.polo.trim() !== "") polos.add(os.polo.trim());
       if (os.supervisor && os.supervisor !== "#N/A" && os.supervisor.trim() !== "") supervisores.add(os.supervisor.trim());
     });
@@ -3287,7 +4009,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchTecnicoSelect = document.getElementById("search-tecnico");
     if (searchTecnicoSelect) {
       const equipesReais = new Map();
-      window.COIDatabase.os.forEach(os => {
+      (window.COIDatabase.operacional?.os || []).forEach(os => {
         if (os.id_tecnico && os.id_tecnico !== 0) equipesReais.set(os.id_tecnico, `Equipe ${os.id_tecnico}`);
       });
       searchTecnicoSelect.innerHTML = '<option value="all">Todas as Equipes</option>';
@@ -3331,11 +4053,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // telas que usam getFilteredOSList. Nas telas com filtros próprios
         // ou cálculo sobre a base total, escondê-los evita a impressão de
         // filtro "que não funciona".
-        const filterBar = document.querySelector(".topbar .filter-bar");
-        if (filterBar) {
-          const telasSemFiltroGlobal = ["atrasadas", "vencehoje"];
-          filterBar.style.display = telasSemFiltroGlobal.includes(tabId) ? "none" : "";
-        }
+        atualizarVisibilidadeFiltros(tabId);
 
         renderActivePage();
         // Re-render extra para tela Indicadores Contratuais
@@ -3351,6 +4069,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (closeDrawerBtn) {
       closeDrawerBtn.addEventListener("click", closeOSDrawer);
     }
+
+    // Item 3 (Sprint 01): cards da Home acionáveis — reutilizam a navegação
+    // existente disparando o clique no menu correspondente. Não alteram o
+    // layout nem a navegação atual; apenas adicionam atalhos.
+    const wireCardShortcut = (valueId, navId, dica) => {
+      const valueEl = document.getElementById(valueId);
+      const card = valueEl ? valueEl.closest(".sigis-card") : null;
+      const nav = document.getElementById(navId);
+      if (!card || !nav) return;
+      card.style.cursor = "pointer";
+      card.setAttribute("title", dica);
+      card.addEventListener("click", () => nav.click());
+    };
+    wireCardShortcut("sigis-fora-prazo", "nav-atrasadas", "Ver as OS atrasadas");
   }
 
   // 2. Inicialização dos Filtros da Barra Superior (FE-003 / RF-002)
@@ -3367,7 +4099,7 @@ document.addEventListener("DOMContentLoaded", () => {
         searchTecnicoSelect.innerHTML = '<option value="all">Todas as Equipes</option>';
         // Usa equipes reais das OS importadas (não o mock do database.js)
         const equipesReais = new Map();
-        (window.COIDatabase?.os || []).forEach(os => {
+        (window.COIDatabase?.operacional?.os || []).forEach(os => {
           if (os.id_tecnico && os.id_tecnico !== 0) {
             const nome = `Equipe ${os.id_tecnico}`;
             equipesReais.set(os.id_tecnico, nome);
@@ -3468,13 +4200,25 @@ document.addEventListener("DOMContentLoaded", () => {
       state.vencehojePage = 1;
       renderVenceHoje();
     });
+
+
+    // Blocos colapsáveis da Missão Operacional (Zona de Atenção / Aguardando
+    // Programação) — wiring único, o conteúdo é preenchido a cada render.
+    document.getElementById("missao-zona-atencao-header")?.addEventListener("click", () => {
+      const body = document.getElementById("missao-zona-atencao-body");
+      if (body) body.style.display = body.style.display === "none" ? "" : "none";
+    });
+    document.getElementById("missao-aguardando-header")?.addEventListener("click", () => {
+      const body = document.getElementById("missao-aguardando-body");
+      if (body) body.style.display = body.style.display === "none" ? "" : "none";
+    });
   }
 
   // 3. Filtragem de Dados Base
   function getFilteredOSList() {
     if (!window.COIDatabase) return [];
     
-    return window.COIDatabase.os.filter(item => {
+    return (window.COIDatabase.operacional?.os || []).filter(item => {
       // Filtro de Prioridade
       if (state.filters.priority !== "all" && item.prioridade !== state.filters.priority) {
         return false;
@@ -3485,22 +4229,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return false;
       }
       
-      // Filtro de Período
-      if (state.filters.period !== "all") {
-        const dateAbertura = new Date(item.data_abertura);
-        const timeDiff = state.currentSystemTime.getTime() - dateAbertura.getTime();
-        const daysDiff = timeDiff / (1000 * 3600 * 24);
-        
-        if (state.filters.period === "7d" && daysDiff > 7) {
-          return false;
-        }
-        if (state.filters.period === "month") {
-          // Filtrar por Julho de 2026
-          const isSameMonth = dateAbertura.getUTCMonth() === 6 && dateAbertura.getUTCFullYear() === 2026;
-          if (!isSameMonth) return false;
-        }
+      // Filtro de Período — delega ao único ponto de verdade (dataEstaNoPeriodo),
+      // que já trata 3d/7d/15d/month corretamente e calcula "Este Mês" a
+      // partir de state.currentSystemTime (não mais fixo em julho/2026).
+      if (!dataEstaNoPeriodo(item.data_abertura, state.filters.period, state.currentSystemTime)) {
+        return false;
       }
-      
+
       return true;
     });
   }
@@ -3737,7 +4472,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const filterMatricula = document.getElementById("search-cliente")?.value.toLowerCase().trim() || "";
     const filterTecnico = document.getElementById("search-tecnico")?.value || "all";
     const filterStatus = document.getElementById("search-status")?.value || "all";
-    const filterServico = document.getElementById("search-tipo")?.value.toLowerCase().trim() || "";
+    const filterServico = normalizarTexto(document.getElementById("search-tipo")?.value.trim() || "");
     const termos = filterServico.split(",").map(t => t.trim()).filter(Boolean);
     const lista = filteredOS.filter(os => {
       if (filterOSNum && !os.numero_os.toLowerCase().includes(filterOSNum)) return false;
@@ -3745,7 +4480,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (filterTecnico !== "all" && os.id_tecnico !== parseInt(filterTecnico)) return false;
       if (filterStatus !== "all" && os.status !== filterStatus) return false;
       if (termos.length > 0) {
-        const nome = getServicoName(os.id_tipo_servico).toLowerCase();
+        const nome = normalizarTexto(getServicoName(os.id_tipo_servico));
         const cod = String(os.id_tipo_servico || "");
         if (!termos.some(t => nome.includes(t) || cod.includes(t))) return false;
       }
@@ -3797,282 +4532,237 @@ document.addEventListener("DOMContentLoaded", () => {
     const listaFiltrada = lista.filter(os => statusSelecionados.includes(os.situacao_original || os.status));
     if (listaFiltrada.length === 0) { alert("Nenhuma OS para os status selecionados."); return; }
 
-    const now = state.currentSystemTime;
+    // Usa data real do dispositivo — mesmo padrão do Mini BI original
+    // (não usa state.currentSystemTime congelada em SIMULACAO).
+    const now = new Date();
     const hoje = now.toLocaleDateString("pt-BR");
-    const filtroDesc = termos.length > 0 ? termos.join(", ") : "Todos os serviços";
+    // filtroDesc: badge opcional só se houver filtro de serviço ativo
+    const filtroDesc = termos.length > 0 ? termos.join(", ") : "";
+
     function fmtDate(v) { if (!v) return ""; try { return new Date(v).toLocaleDateString("pt-BR"); } catch(e){return "";} }
     function getSit(os) {
-      if (os.status === "Concluída" || os.status === "Cancelada") return { sit: os.status, dias: 0, prazo: "" };
+      if (os.status === "Concluída" || os.status === "Cancelada") return { sit: os.status, dias: 0, horas: 0, prazo: "" };
       const pr = os.data_prazo_programada ? new Date(os.data_prazo_programada) : (os.data_prazo ? new Date(os.data_prazo) : null);
-      if (!pr) return { sit: "SEM PRAZO", dias: 0, prazo: "" };
+      if (!pr) return { sit: "SEM PRAZO", dias: 0, horas: 0, prazo: "" };
       const venc = now > pr;
       const dias = Math.floor(Math.abs(now - pr) / 86400000);
-      return { sit: venc ? "ATRASADA" : "NO PRAZO", dias, prazo: pr.toLocaleDateString("pt-BR") };
+      const horas = Math.floor(Math.abs(now - pr) / 3600000);
+      return { sit: venc ? "ATRASADA" : "NO PRAZO", dias, horas, prazo: pr.toLocaleDateString("pt-BR") };
     }
-    const proc = listaFiltrada.map(os => { const s = getSit(os); return { ...s, num: os.numero_os, mat: getClienteName(os.id_cliente), mun: os.municipio||"", polo: os.polo||"", sup: os.supervisor||"", serv: getServicoName(os.id_tipo_servico), cod: os.id_tipo_servico||"", eq: getTecnicoName(os.id_tecnico), st: os.status, ab: fmtDate(os.data_abertura) }; });
-    const atras = proc.filter(o=>o.sit==="ATRASADA").sort((a,b)=>b.dias-a.dias);
-    const okOS  = proc.filter(o=>o.sit==="NO PRAZO").sort((a,b)=>a.prazo.localeCompare(b.prazo));
+    // Sprint COI-18D: Desobstrução (SLA 24h) exibe prazo em horas
+    function rotuloPrazo(o, atrasada) {
+      const ehDesob = CODIGOS_DESOBSTRUCAO_SLA.has(Number(o.cod));
+      if (ehDesob) return atrasada ? `Atrasada há ${o.horas}h` : `Restam ${o.horas}h`;
+      if (atrasada) return `Atrasada há ${o.dias} dias`;
+      return o.dias === 0 ? "Vence Hoje" : o.dias === 1 ? "Vence Amanhã" : `Restam ${o.dias} dias`;
+    }
+    function corPrazo(o, atrasada) {
+      const ehDesob = CODIGOS_DESOBSTRUCAO_SLA.has(Number(o.cod));
+      if (ehDesob) {
+        if (atrasada) return o.horas > 12 ? "#ef4444" : o.horas > 4 ? "#f59e0b" : "#374151";
+        return o.horas <= 4 ? "#ef4444" : o.horas <= 12 ? "#f59e0b" : "#22c55e";
+      }
+      if (atrasada) return o.dias > 30 ? "#ef4444" : o.dias > 10 ? "#f59e0b" : "#374151";
+      return o.dias <= 2 ? "#ef4444" : o.dias <= 5 ? "#f59e0b" : "#22c55e";
+    }
+
+    const proc = listaFiltrada.map(os => {
+      const s = getSit(os);
+      return { ...s, num: os.numero_os, mun: os.municipio||"", polo: os.polo||"", sup: os.supervisor||"",
+               serv: getServicoName(os.id_tipo_servico), cod: os.id_tipo_servico||"", st: os.status };
+    });
+
+    // Pendentes = não concluídas nem canceladas
+    const pendArr = proc.filter(o => !["Concluída","Cancelada"].includes(o.st));
+    const noPrazo = pendArr.filter(o => o.sit === "NO PRAZO");
+    const vence10 = noPrazo.filter(o => o.dias <= 10);
+
+    // Por polo: janelas exclusivas de vencimento (0-2d / 3-7d / 8-30d)
     const porPolo = {};
-    proc.forEach(o => {
-      if (o.st==="Concluída"||o.st==="Cancelada") return;
-      const p=o.polo||"N/I";
-      if(!porPolo[p]) porPolo[p]={sup:o.sup,total:0,at:0,ok:0};
-      porPolo[p].total++; if(o.sit==="ATRASADA") porPolo[p].at++; else porPolo[p].ok++;
+    pendArr.forEach(o => {
+      const p = o.polo || "N/I";
+      if (!porPolo[p]) porPolo[p] = { sup: o.sup, total: 0, at: 0, v2: 0, v7: 0, v30: 0 };
+      porPolo[p].total++;
+      if (o.sit === "ATRASADA") { porPolo[p].at++; }
+      else if (o.sit === "NO PRAZO") {
+        if      (o.dias <= 2)  porPolo[p].v2++;
+        else if (o.dias <= 7)  porPolo[p].v7++;
+        else if (o.dias <= 30) porPolo[p].v30++;
+      }
     });
-    const rank = Object.entries(porPolo).sort((a,b)=>b[1].at-a[1].at);
-    const pend = proc.filter(o=>!["Concluída","Cancelada"].includes(o.st)).length;
-    const taxa = pend>0?(atras.length/pend*100).toFixed(1):"0.0";
-    const maxAt = rank.length>0?Math.max(...rank.map(([,d])=>d.at),1):1;
+    const rank  = Object.entries(porPolo).sort((a,b) => b[1].at - a[1].at);
 
-    // Gráfico de barras responsivo — % = participação no total de atrasadas
-    // Usa Largest Remainder Method para garantir que a soma = 100%
-    const totalAtrasadas = atras.length || 1;
-    const rankComPct = rank.map(([polo,d]) => {
-      const exactPct = d.at>0?(d.at/totalAtrasadas*100):0;
-      return { polo, d, exactPct, floor: Math.floor(exactPct), remainder: exactPct - Math.floor(exactPct) };
-    });
-    let somaFloor = rankComPct.reduce((s,r)=>s+r.floor, 0);
-    let restante = 100 - somaFloor;
-    rankComPct.sort((a,b)=>b.remainder-a.remainder);
-    rankComPct.forEach((r,i)=>{ r.pctLabel = r.floor + (i < restante ? 1 : 0); });
-    rankComPct.sort((a,b)=>b.d.at-a.d.at); // voltar ordem original
-    const barsSVG = rankComPct.map(({polo,d,pctLabel},i) => {
-      const pctBarra = d.at>0?(d.at/maxAt*100).toFixed(1):0;
-      const txInterna = d.total>0?(d.at/d.total*100).toFixed(0):0;
-      const cor = txInterna>=50?"#ef4444":txInterna>=25?"#f59e0b":"#22c55e";
-      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="width:130px;text-align:right;font-size:11px;color:#94a3b8;font-weight:600;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${polo}</div>
-        <div style="flex:1;min-width:0;height:22px;background:#1e293b;border-radius:4px;position:relative;overflow:hidden">
-          <div style="width:${pctBarra}%;height:100%;background:${cor};border-radius:4px;transition:width .5s"></div>
-          <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:#fff">${d.at}</span>
-        </div>
-        <div style="text-align:right;font-size:11px;font-weight:700;color:${cor};flex-shrink:0;min-width:80px">${pctLabel}% do total</div>
-      </div>`;
-    }).join("");
-    const barsH = 0; const w = 420;
-
-    // Donut SVG
-    const tot = lista.length, atN = atras.length, okN = okOS.length;
-    const r=60, cx=80, cy=80, circ=2*Math.PI*r;
-    const pAt = tot>0?atN/tot:0; const pOk = tot>0?okN/tot:0;
-    const dashAt = circ*pAt, dashOk = circ*pOk;
-    const offAt = 0, offOk = -(circ*pAt);
-    const donutSVG = `<svg width="160" height="160" viewBox="0 0 160 160">
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#1e293b" stroke-width="22"/>
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#ef4444" stroke-width="22" stroke-dasharray="${dashAt} ${circ-dashAt}" stroke-dashoffset="${circ*0.25}" transform="rotate(-90 ${cx} ${cy})"/>
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#22c55e" stroke-width="22" stroke-dasharray="${dashOk} ${circ-dashOk}" stroke-dashoffset="${circ*0.25-dashAt}" transform="rotate(-90 ${cx} ${cy})"/>
-      <text x="${cx}" y="${cy-8}" text-anchor="middle" font-size="22" font-weight="800" fill="#fff" font-family="Segoe UI,sans-serif">${taxa}%</text>
-      <text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="10" fill="#64748b" font-family="Segoe UI,sans-serif">Taxa Atraso</text>
-    </svg>`;
-
-    const atrasRows = atras.map((o,i)=>{
-      const bg=i%2===0?"rgba(239,68,68,.06)":"transparent";
-      const dc=o.dias>30?"#ef4444":o.dias>10?"#f59e0b":"#64748b";
-      const badge=o.dias>30?`<span style="background:#ef4444;color:#fff;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700">${o.dias}d</span>`:o.dias>10?`<span style="background:#f59e0b;color:#fff;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700">${o.dias}d</span>`:`<span style="background:#374151;color:#fff;padding:1px 7px;border-radius:999px;font-size:10px">${o.dias}d</span>`;
+    // Tabela de ranking (coluna esquerda)
+    const rankRows = rank.map(([polo,d],i) => {
+      const tx   = d.total > 0 ? (d.at / d.total * 100).toFixed(0) : 0;
+      const cor  = tx >= 50 ? "#ef4444" : tx >= 25 ? "#f59e0b" : "#22c55e";
+      const bg   = i % 2 === 0 ? "rgba(255,255,255,.03)" : "transparent";
+      const prior = tx >= 50 ? "🔴 CRÍTICO" : tx >= 25 ? "🟡 ATENÇÃO" : "🟢 ESTÁVEL";
       return `<tr style="background:${bg}">
-        <td style="font-weight:700;color:#8dc63f;font-size:11px">${o.num}</td>
-        <td style="font-size:11px">${o.mun}</td><td style="font-size:11px;color:#94a3b8">${o.polo}</td>
-        <td style="font-size:11px;color:#94a3b8">${o.sup}</td>
-        <td style="font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.serv}</td>
-        <td style="font-size:10px;color:#64748b;text-align:center">${o.ab}</td>
-        <td style="font-size:10px;color:#64748b;text-align:center">${o.prazo}</td>
-        <td style="text-align:center">${badge}</td>
+        <td style="color:#64748b;font-size:10px;font-weight:700">${i+1}º</td>
+        <td style="font-weight:700;font-size:11px">${polo}</td>
+        <td style="font-size:11px;color:#64748b">${d.sup}</td>
+        <td style="text-align:center;font-size:11px">${d.total}</td>
+        <td style="text-align:center;font-weight:800;color:#ef4444">${d.at}</td>
+        <td style="text-align:center">
+          <span style="background:${cor};color:#fff;padding:1px 8px;border-radius:999px;font-size:10px;font-weight:700">${tx}%</span>
+        </td>
+        <td style="font-size:11px;font-weight:700;color:${cor}">${prior}</td>
       </tr>`;
     }).join("");
 
-    const okRows = okOS.map((o,i)=>{
-      const bg=i%2===0?"rgba(34,197,94,.06)":"transparent";
-      const dc=o.dias<=2?"#ef4444":o.dias<=5?"#f59e0b":"#22c55e";
-      const badge=`<span style="background:${dc};color:#fff;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700">${o.dias}d</span>`;
+    // Tabela de risco futuro (coluna direita) — janelas exclusivas
+    const riskRows = rank.map(([polo,d],i) => {
+      const tx   = d.total > 0 ? (d.at / d.total * 100).toFixed(0) : 0;
+      const cor  = tx >= 50 ? "#ef4444" : tx >= 25 ? "#f59e0b" : "#22c55e";
+      const bg   = i % 2 === 0 ? "rgba(255,255,255,.03)" : "transparent";
+      const prior = tx >= 50 ? "🔴 CRÍTICO" : tx >= 25 ? "🟡 ATENÇÃO" : "🟢 ESTÁVEL";
+      const c2   = d.v2  > 0 ? `<span style="color:#f97316;font-weight:700">${d.v2}</span>`  : `<span style="color:#334155">—</span>`;
+      const c7   = d.v7  > 0 ? `<span style="color:#f59e0b;font-weight:700">${d.v7}</span>`  : `<span style="color:#334155">—</span>`;
+      const c30  = d.v30 > 0 ? `<span style="color:#64748b">${d.v30}</span>`                  : `<span style="color:#334155">—</span>`;
+      const cat  = d.at  > 0 ? `<span style="color:#ef4444;font-weight:800">${d.at}</span>`  : `<span style="color:#334155">—</span>`;
       return `<tr style="background:${bg}">
-        <td style="font-weight:700;color:#8dc63f;font-size:11px">${o.num}</td>
-        <td style="font-size:11px">${o.mun}</td><td style="font-size:11px;color:#94a3b8">${o.polo}</td>
-        <td style="font-size:11px;color:#94a3b8">${o.sup}</td>
-        <td style="font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.serv}</td>
-        <td style="font-size:10px;color:#64748b;text-align:center">${o.ab}</td>
-        <td style="font-size:10px;color:#64748b;text-align:center">${o.prazo}</td>
-        <td style="text-align:center">${badge}</td>
+        <td style="font-weight:700;font-size:11px">${polo}</td>
+        <td style="font-size:11px;color:#64748b">${d.sup}</td>
+        <td style="text-align:center">${cat}</td>
+        <td style="text-align:center">${c2}</td>
+        <td style="text-align:center">${c7}</td>
+        <td style="text-align:center">${c30}</td>
+        <td style="font-size:11px;font-weight:700;color:${cor}">${prior}</td>
       </tr>`;
     }).join("");
 
-    const listaParaBI = listaFiltrada;
+    const badgeFiltro = filtroDesc
+      ? `<span style="background:rgba(141,198,63,.15);color:#8dc63f;font-size:10px;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid rgba(141,198,63,.3)">${filtroDesc}</span>`
+      : "";
+
     const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>COI — Mini BI</title>
+<title>COI — Painel Executivo</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0}
-.app{display:flex;flex-direction:column;height:100vh}
+html,body{min-height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:#0f172a;color:#e2e8f0}
 /* TOPBAR */
-.topbar{background:linear-gradient(90deg,#0e3a5c,#0a2d47);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(141,198,63,.3);flex-shrink:0}
+.topbar{background:linear-gradient(90deg,#0e3a5c,#0a2d47);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(141,198,63,.3);flex-wrap:wrap}
 .topbar h1{color:#fff;font-size:15px;font-weight:800;letter-spacing:.02em}
 .topbar p{color:#64748b;font-size:10px;margin-top:2px}
-.actions{display:flex;gap:8px;align-items:center}
-.badge-green{background:#8dc63f;color:#fff;font-size:10px;font-weight:700;padding:3px 12px;border-radius:999px}
-.btn-pdf{background:transparent;border:1px solid #8dc63f;color:#8dc63f;font-size:11px;font-weight:700;padding:4px 12px;border-radius:6px;cursor:pointer}
-.btn-pdf:hover{background:#8dc63f;color:#fff}
-/* TABS */
-.tabs{background:#0b1f36;display:flex;gap:0;padding:0 20px;border-bottom:1px solid #1e293b;flex-shrink:0}
-.tab{padding:9px 20px;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:.15s;display:flex;align-items:center;gap:6px}
-.tab.active{color:#8dc63f;border-bottom-color:#8dc63f}
-.tab:hover:not(.active){color:#e2e8f0}
-.tab .cnt{background:#1e293b;color:#94a3b8;font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px}
-.tab.active .cnt{background:#8dc63f;color:#fff}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn-act{background:transparent;border:1px solid #8dc63f;color:#8dc63f;font-size:11px;font-weight:700;padding:5px 14px;border-radius:6px;cursor:pointer;transition:.15s;white-space:nowrap}
+.btn-act:hover{background:#8dc63f;color:#fff}
+.btn-act.solid{background:#8dc63f;color:#fff}
+.btn-act.solid:hover{background:#7ab52e}
 /* BODY */
-.body{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:14px 20px;gap:12px;min-height:0}
-.panel{display:none;flex:1;overflow:hidden;flex-direction:column;gap:12px;min-height:0}
-.panel.active{display:flex}
-/* CARDS */
-.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;flex-shrink:0}
-.card{background:#1e293b;border-radius:10px;padding:12px 16px;position:relative;overflow:hidden;border:1px solid #334155}
-.card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
-.card.c1::before{background:#3b82f6}.card.c2::before{background:#ef4444}
-.card.c3::before{background:#22c55e}.card.c4::before{background:#f59e0b}.card.c5::before{background:#a78bfa}
-.card .lbl{font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
-.card .val{font-size:28px;font-weight:800;margin-top:4px;line-height:1}
-.card .sub{font-size:10px;color:#475569;margin-top:3px}
-/* GRID RESUMO */
-.grid-resumo{display:grid;grid-template-columns:1.4fr minmax(0,380px);gap:12px;flex:1;min-height:0;overflow:hidden}
-.grid-resumo-left{display:flex;flex-direction:column;gap:12px;overflow:hidden;min-width:0}
-.grid-resumo-right{display:flex;flex-direction:column;gap:12px;overflow:hidden;min-width:0}
-@media(max-width:900px){.grid-resumo{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)!important}}
-@media(max-width:600px){.cards{grid-template-columns:1fr!important}.topbar h1{font-size:12px!important}}
-/* BLOCKS */
-.block{background:#1e293b;border-radius:10px;border:1px solid #334155;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-.block-title{padding:10px 16px;font-weight:700;font-size:12px;color:#fff;background:#0f172a;border-bottom:1px solid #334155;flex-shrink:0;display:flex;align-items:center;gap:8px}
-.tbl-wrap{flex:1;overflow-y:auto;min-height:0}
-.tbl-wrap::-webkit-scrollbar{width:4px}.tbl-wrap::-webkit-scrollbar-track{background:#0f172a}.tbl-wrap::-webkit-scrollbar-thumb{background:#334155;border-radius:2px}
-table{width:100%;border-collapse:collapse;font-size:11.5px}
-th{padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:#475569;background:#0f172a;position:sticky;top:0;border-bottom:1px solid #1e293b;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
-td{padding:7px 12px;border-bottom:1px solid #1e293b;vertical-align:middle}
-/* FULL */
-.full-panel{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
-/* DONUT + STATS */
-.donut-block{background:#1e293b;border-radius:10px;border:1px solid #334155;padding:14px;display:flex;align-items:center;gap:16px;flex-shrink:0}
-.donut-stats{flex:1;display:flex;flex-direction:column;gap:10px}
-.stat-row{display:flex;align-items:center;justify-content:space-between}
-.stat-label{font-size:11px;color:#64748b;display:flex;align-items:center;gap:6px}
-.stat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.stat-val{font-size:16px;font-weight:800}
+.body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
+/* KPI STRIP */
+.kpi-strip{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.kpi{background:#1e293b;border-radius:10px;padding:16px 18px;border:1px solid #334155;position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.k1::before{background:#3b82f6}.kpi.k4::before{background:#f97316}
+.kpi .lbl{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
+.kpi .val{font-size:36px;font-weight:800;margin-top:6px;line-height:1}
+.kpi .sub{font-size:10px;color:#475569;margin-top:5px}
+/* GRID PRINCIPAL */
+.grid-main{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.col{display:flex;flex-direction:column;gap:14px}
+/* BLOCK */
+.block{background:#1e293b;border-radius:10px;border:1px solid #334155;overflow:hidden;display:flex;flex-direction:column}
+.block-title{padding:10px 16px;font-weight:700;font-size:12px;color:#fff;background:#0f172a;border-bottom:1px solid #334155;display:flex;align-items:center;gap:8px;flex-shrink:0;flex-wrap:wrap}
+.block-body{padding:12px 16px}
+.tbl-wrap{overflow-x:auto}
+.tbl-wrap::-webkit-scrollbar{height:4px;width:4px}.tbl-wrap::-webkit-scrollbar-track{background:#0f172a}.tbl-wrap::-webkit-scrollbar-thumb{background:#334155;border-radius:2px}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:#475569;background:#0f172a;border-bottom:1px solid #1e293b;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
+td{padding:7px 10px;border-bottom:1px solid #1e293b;vertical-align:middle}
+/* RESPONSIVE */
+@media(max-width:900px){
+  .grid-main{grid-template-columns:1fr}
+  .kpi-strip{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:480px){
+  .body{padding:10px}
+  .kpi .val{font-size:28px}
+  .topbar h1{font-size:13px}
+}
+/* PRINT */
 @media print{
-  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
-  .topbar,.tabs,.btn-pdf{display:none}
-  .app{height:auto;overflow:visible}
-  .body{background:#fff;padding:8px;overflow:visible;height:auto}
-  .panel{overflow:visible;height:auto;display:flex!important}
-  .block,.card{border-color:#e2e8f0;box-shadow:none;break-inside:avoid}
-  .tbl-wrap{overflow:visible;max-height:none}
-  .grid-resumo{display:grid}
-  .full-panel{height:auto;overflow:visible}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .btn-act{display:none!important}
+  .body{padding:8px}
+  .block,.kpi{break-inside:avoid}
+  .grid-main{display:grid}
 }
 </style></head><body>
-<div class="app">
-  <div class="topbar">
-    <div><h1>AMBIENTAL MS PANTANAL — C.O.I</h1><p>Mini BI · Filtro: ${filtroDesc} · ${hoje}</p></div>
-    <div class="actions">
-      <span class="badge-green">Reposição de Pavimento</span>
-      <button class="btn-pdf" onclick="window.print()">🖨 PDF</button>
-      <button class="btn-pdf" onclick="exportarMiniBI()" style="margin-left:6px;background:#8dc63f;color:#fff;border-color:#8dc63f">⬇ Excel</button>
+<div class="topbar">
+  <div>
+    <h1>AMBIENTAL MS PANTANAL — C.O.I</h1>
+    <p>Painel Executivo · ${hoje}</p>
+  </div>
+  <div class="actions">
+    ${badgeFiltro}
+    <button class="btn-act" onclick="window.print()">🖨 PDF</button>
+    <button class="btn-act solid" onclick="exportarBI()">⬇ Excel</button>
+  </div>
+</div>
+<div class="body">
+
+  <!-- KPI STRIP: 2 indicadores -->
+  <div class="kpi-strip">
+    <div class="kpi k1">
+      <div class="lbl">Pendentes</div>
+      <div class="val" style="color:#3b82f6">${pendArr.length}</div>
+      <div class="sub">OS em aberto</div>
+    </div>
+    <div class="kpi k4">
+      <div class="lbl">Vencem ≤ 10 dias</div>
+      <div class="val" style="color:#f97316">${vence10.length}</div>
+      <div class="sub">risco de atraso iminente</div>
     </div>
   </div>
-  <div class="tabs">
-    <div class="tab active" onclick="sw('resumo',this)">📊 Resumo</div>
-    <div class="tab" onclick="sw('atrasadas',this)">⚠ Atrasadas <span class="cnt">${atras.length}</span></div>
-    <div class="tab" onclick="sw('noprazo',this)">✅ No Prazo <span class="cnt">${okOS.length}</span></div>
-  </div>
-  <div class="body">
 
-    <!-- RESUMO -->
-    <div class="panel active" id="panel-resumo">
-      <div class="cards">
-        <div class="card c1"><div class="lbl">Total OS</div><div class="val" style="color:#3b82f6">${listaFiltrada.length}</div><div class="sub">analisadas</div></div>
-        <div class="card c2"><div class="lbl">Atrasadas</div><div class="val" style="color:#ef4444">${atras.length}</div><div class="sub">prazo vencido</div></div>
-        <div class="card c3"><div class="lbl">No Prazo</div><div class="val" style="color:#22c55e">${okOS.length}</div><div class="sub">dentro do prazo</div></div>
-        <div class="card c4"><div class="lbl">Taxa Atraso</div><div class="val" style="color:#f59e0b">${taxa}%</div><div class="sub">do total pendente</div></div>
-        <div class="card c5"><div class="lbl">Maior Atraso</div><div class="val" style="color:#a78bfa">${atras[0]?.dias||0}d</div><div class="sub">${atras[0]?.mun||"-"}</div></div>
-      </div>
-      <div class="grid-resumo">
-        <div class="grid-resumo-left">
-          <div class="block" style="flex:none">
-            <div class="block-title">📊 Atrasadas por Polo <span style="color:#64748b;font-weight:400;font-size:11px">(% = taxa de atraso do polo)</span></div>
-            <div style="padding:12px 16px;overflow-y:auto;flex:1">${barsSVG}</div>
-          </div>
-          <div class="block" style="flex:1;min-height:0">
-            <div class="block-title" style="background:#0e3a5c;border-bottom-color:#1e4a6e">📍 Onde Atuar — Ranking por Polo</div>
-            <div class="tbl-wrap">
-              <table>
-                <thead><tr><th>#</th><th>Polo</th><th>Supervisor</th><th style="text-align:center">Total</th><th style="text-align:center">Atrasadas</th><th style="text-align:center">No Prazo</th><th style="text-align:center">Taxa</th><th>Prioridade</th></tr></thead>
-                <tbody>${rank.map(([polo,d],i)=>{
-                  const tx=d.total>0?(d.at/d.total*100).toFixed(0):0;
-                  const cor=tx>=50?"#ef4444":tx>=25?"#f59e0b":"#22c55e";
-                  const bg=i%2===0?"rgba(255,255,255,.03)":"transparent";
-                  const prior=tx>=50?"🔴 CRÍTICO":tx>=25?"🟡 ATENÇÃO":"🟢 ESTÁVEL";
-                  return `<tr style="background:${bg}">
-                    <td style="color:#64748b;font-size:10px;font-weight:700">${i+1}º</td>
-                    <td style="font-weight:700;font-size:11px">${polo}</td>
-                    <td style="font-size:11px;color:#64748b">${d.sup}</td>
-                    <td style="text-align:center;font-size:11px">${d.total}</td>
-                    <td style="text-align:center;font-weight:800;color:#ef4444">${d.at}</td>
-                    <td style="text-align:center;color:#22c55e">${d.ok}</td>
-                    <td style="text-align:center">
-                      <span style="background:${cor};color:#fff;padding:1px 8px;border-radius:999px;font-size:10px;font-weight:700">${tx}%</span>
-                    </td>
-                    <td style="font-size:11px;font-weight:700;color:${cor}">${prior}</td>
-                  </tr>`;
-                }).join("")}</tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-        <div class="grid-resumo-right">
-          <div class="donut-block">
-            ${donutSVG}
-            <div class="donut-stats">
-              <div class="stat-row"><span class="stat-label"><span class="stat-dot" style="background:#ef4444"></span>Atrasadas</span><span class="stat-val" style="color:#ef4444">${atras.length}</span></div>
-              <div class="stat-row"><span class="stat-label"><span class="stat-dot" style="background:#22c55e"></span>No Prazo</span><span class="stat-val" style="color:#22c55e">${okOS.length}</span></div>
-              <div style="height:1px;background:#334155;margin:4px 0"></div>
-              <div class="stat-row"><span class="stat-label" style="color:#64748b">Polo crítico</span><span style="font-size:11px;font-weight:700;color:#ef4444">${rank[0]?.[0]||"-"}</span></div>
-              <div class="stat-row"><span class="stat-label" style="color:#64748b">Supervisor</span><span style="font-size:11px;color:#94a3b8">${rank[0]?.[1].sup||"-"}</span></div>
-            </div>
-          </div>
-          <div class="block" style="flex:1">
-            <div class="block-title">🔴 Top 10 Mais Críticas</div>
-            <div class="tbl-wrap">
-              <table>
-                <thead><tr><th>Nº OS</th><th>Município</th><th>Polo</th><th>Prazo</th><th>Atraso</th></tr></thead>
-                <tbody>${atras.slice(0,10).map((o,i)=>{
-                  const bg=i%2===0?"rgba(239,68,68,.05)":"transparent";
-                  const dc=o.dias>30?"#ef4444":o.dias>10?"#f59e0b":"#64748b";
-                  return `<tr style="background:${bg}"><td style="font-weight:700;color:#8dc63f;font-size:11px">${o.num}</td><td style="font-size:11px">${o.mun}</td><td style="font-size:11px;color:#64748b">${o.polo}</td><td style="font-size:11px;color:#64748b;text-align:center">${o.prazo}</td><td style="text-align:center"><span style="background:${dc};color:#fff;padding:1px 8px;border-radius:999px;font-size:10px;font-weight:700">${o.dias}d</span></td></tr>`;
-                }).join("")}</tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <!-- GRID PRINCIPAL: ranking | risco futuro -->
+  <div class="grid-main">
 
-    <!-- ATRASADAS -->
-    <div class="panel" id="panel-atrasadas">
-      <div class="full-panel block">
-        <div class="block-title" style="background:#7f1d1d;border-bottom-color:#991b1b">⚠ OS ATRASADAS — <span style="color:#fca5a5">${atras.length} ordens</span> <span style="color:#64748b;font-weight:400;font-size:11px">ordenadas do mais crítico</span></div>
+    <!-- Coluna esquerda: ranking -->
+    <div class="col">
+      <div class="block">
+        <div class="block-title">📍 Ranking Operacional por Polo</div>
         <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Nº OS</th><th>Município</th><th>Polo</th><th>Supervisor</th><th>Serviço</th><th>Abertura</th><th>Prazo</th><th>Atraso</th></tr></thead>
-            <tbody>${atrasRows}</tbody>
+          <table id="tbl-ranking">
+            <thead>
+              <tr>
+                <th>#</th><th>Polo</th><th>Supervisor</th>
+                <th style="text-align:center">Total</th>
+                <th style="text-align:center">Atrasadas</th>
+                <th style="text-align:center">Taxa</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>${rankRows}</tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- NO PRAZO -->
-    <div class="panel" id="panel-noprazo">
-      <div class="full-panel block">
-        <div class="block-title" style="background:#14532d;border-bottom-color:#166534">✅ OS NO PRAZO — <span style="color:#86efac">${okOS.length} ordens</span> <span style="color:#64748b;font-weight:400;font-size:11px">ordenadas pelo prazo mais próximo</span></div>
+    <!-- Coluna direita: risco futuro -->
+    <div class="col">
+      <div class="block" style="flex:1">
+        <div class="block-title">
+          🔮 Risco Futuro — Vencimentos por Polo
+          <span style="color:#64748b;font-size:10px;font-weight:400">janelas exclusivas de prazo</span>
+        </div>
         <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Nº OS</th><th>Município</th><th>Polo</th><th>Supervisor</th><th>Serviço</th><th>Abertura</th><th>Prazo</th><th>Restam</th></tr></thead>
-            <tbody>${okRows}</tbody>
+          <table id="tbl-risco">
+            <thead>
+              <tr>
+                <th>Polo</th><th>Supervisor</th>
+                <th style="text-align:center;color:#ef4444">Atrasadas</th>
+                <th style="text-align:center;color:#f97316">0–2 dias</th>
+                <th style="text-align:center;color:#f59e0b">3–7 dias</th>
+                <th style="text-align:center;color:#94a3b8">8–30 dias</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>${riskRows}</tbody>
           </table>
         </div>
       </div>
@@ -4081,18 +4771,11 @@ td{padding:7px 12px;border-bottom:1px solid #1e293b;vertical-align:middle}
   </div>
 </div>
 <script data-bi="1">
-function sw(id,el){
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('panel-'+id).classList.add('active');
-  el.classList.add('active');
-}
-function exportarMiniBI(){
+function exportarBI(){
   if(typeof XLSX==='undefined'){
-    // XLSX não disponível no contexto do blob — carregar dinamicamente
     var s=document.createElement('script');
     s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    s.onload=function(){ _doExport(); };
+    s.onload=_doExport;
     document.head.appendChild(s);
     return;
   }
@@ -4100,162 +4783,17 @@ function exportarMiniBI(){
 }
 function _doExport(){
   var wb=XLSX.utils.book_new();
-  var t1=document.querySelector('#panel-resumo .block:last-child table');
-  if(!t1) t1=document.querySelector('#panel-resumo table');
-  if(t1){var ws1=XLSX.utils.table_to_sheet(t1);XLSX.utils.book_append_sheet(wb,ws1,'Onde Atuar');}
-  var t2=document.querySelector('#panel-atrasadas table');
-  if(t2){var ws2=XLSX.utils.table_to_sheet(t2);XLSX.utils.book_append_sheet(wb,ws2,'Atrasadas');}
-  var t3=document.querySelector('#panel-noprazo table');
-  if(t3){var ws3=XLSX.utils.table_to_sheet(t3);XLSX.utils.book_append_sheet(wb,ws3,'No Prazo');}
-  var data=new Date().toISOString().slice(0,10);
-  XLSX.writeFile(wb,'COI_MiniBI_'+data+'.xlsx');
+  var t1=document.getElementById('tbl-ranking');
+  if(t1){XLSX.utils.book_append_sheet(wb,XLSX.utils.table_to_sheet(t1,{raw:true}),'Ranking por Polo');}
+  var t2=document.getElementById('tbl-risco');
+  if(t2){XLSX.utils.book_append_sheet(wb,XLSX.utils.table_to_sheet(t2,{raw:true}),'Risco Futuro');}
+  XLSX.writeFile(wb,'COI_PainelExecutivo_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 <\/script>
 </body></html>`;
 
     const blob = new Blob([html], { type: "text/html;charset=utf-8" });
     window.open(URL.createObjectURL(blob), "_blank");
-  }
-
-  function limparFiltrosConsulta() {
-    const hoje = now.toLocaleDateString("pt-BR");
-    const filtroDesc = termos.length > 0 ? termos.join(", ") : "Todos os serviços";
-
-    function fmtDate(v) { if (!v) return ""; try { return new Date(v).toLocaleDateString("pt-BR"); } catch(e){return "";} }
-    function getSit(os) {
-      if (os.status === "Concluída" || os.status === "Cancelada") return { sit: os.status, dias: 0, prazo: "" };
-      const pr = os.data_prazo_programada ? new Date(os.data_prazo_programada) : (os.data_prazo ? new Date(os.data_prazo) : null);
-      if (!pr) return { sit: "SEM PRAZO", dias: 0, prazo: "" };
-      const venc = now > pr;
-      const dias = Math.floor(Math.abs(now - pr) / 86400000);
-      return { sit: venc ? "ATRASADA" : "NO PRAZO", dias, prazo: pr.toLocaleDateString("pt-BR") };
-    }
-
-    const proc = listaFiltrada.map(os => { const s = getSit(os); return { ...s, num: os.numero_os, mat: getClienteName(os.id_cliente), mun: os.municipio||"", polo: os.polo||"", sup: os.supervisor||"", serv: getServicoName(os.id_tipo_servico), cod: os.id_tipo_servico||"", eq: getTecnicoName(os.id_tecnico), st: os.status, ab: fmtDate(os.data_abertura) }; });
-
-    const atras = proc.filter(o=>o.sit==="ATRASADA").sort((a,b)=>b.dias-a.dias);
-    const okOS  = proc.filter(o=>o.sit==="NO PRAZO").sort((a,b)=>a.prazo.localeCompare(b.prazo));
-
-    const porPolo = {};
-    proc.forEach(o => {
-      if (o.st==="Concluída"||o.st==="Cancelada") return;
-      const p=o.polo||"N/I";
-      if(!porPolo[p]) porPolo[p]={sup:o.sup,total:0,at:0,ok:0};
-      porPolo[p].total++; if(o.sit==="ATRASADA") porPolo[p].at++; else porPolo[p].ok++;
-    });
-    const rank = Object.entries(porPolo).sort((a,b)=>b[1].at-a[1].at);
-    const taxa = proc.filter(o=>!["Concluída","Cancelada"].includes(o.st)).length > 0
-      ? (atras.length / proc.filter(o=>!["Concluída","Cancelada"].includes(o.st)).length * 100).toFixed(1) : "0.0";
-
-    function rowColor(i, base) { return i%2===0 ? base : ""; }
-
-    const rankRows = rank.map(([polo,d],i) => {
-      const tx = d.total>0?(d.at/d.total*100).toFixed(0):0;
-      const cor = tx>=50?"#FEE2E2":tx>=25?"#FEF3C7":"#DCFCE7";
-      const prior = tx>=50?"🔴 CRÍTICO":tx>=25?"🟡 ATENÇÃO":"🟢 ESTÁVEL";
-      const fcor = tx>=50?"#991B1B":tx>=25?"#92400E":"#15803D";
-      return `<tr style="background:${cor}">
-        <td style="text-align:center;font-weight:700">${i+1}º</td>
-        <td style="font-weight:700">${polo}</td><td>${d.sup}</td>
-        <td style="text-align:center">${d.total}</td>
-        <td style="text-align:center;color:#991B1B;font-weight:700">${d.at}</td>
-        <td style="text-align:center;color:#15803D">${d.ok}</td>
-        <td style="text-align:center">${tx}%</td>
-        <td style="text-align:center;color:${fcor};font-weight:700">${prior}</td>
-      </tr>`;
-    }).join("");
-
-    const atrasRows = atras.map((o,i) => {
-      const bg = i%2===0?"#FEE2E2":"#FFF5F5";
-      const dc = o.dias>30?"#991B1B":o.dias>10?"#D97706":"#374151";
-      return `<tr style="background:${bg}">
-        <td style="font-weight:700">${o.num}</td><td>${o.mat}</td><td>${o.mun}</td>
-        <td>${o.polo}</td><td>${o.sup}</td>
-        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${o.serv}</td>
-        <td style="text-align:center">${o.cod}</td><td style="text-align:center">${o.st}</td>
-        <td style="text-align:center">${o.ab}</td><td style="text-align:center">${o.prazo}</td>
-        <td style="text-align:center;font-weight:700;color:${dc}">${o.dias}d</td>
-      </tr>`;
-    }).join("");
-
-    const okRows = okOS.map((o,i) => {
-      const bg = i%2===0?"#DCFCE7":"#F0FDF4";
-      return `<tr style="background:${bg}">
-        <td style="font-weight:700">${o.num}</td><td>${o.mat}</td><td>${o.mun}</td>
-        <td>${o.polo}</td><td>${o.sup}</td>
-        <td style="max-width:200px">${o.serv}</td>
-        <td style="text-align:center">${o.cod}</td><td style="text-align:center">${o.st}</td>
-        <td style="text-align:center">${o.ab}</td><td style="text-align:center">${o.prazo}</td>
-        <td style="text-align:center;font-weight:700;color:#15803D">${o.dias}d</td>
-      </tr>`;
-    }).join("");
-
-    const listaParaBI = listaFiltrada;
-    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>COI — Relatório ${filtroDesc}</title>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',Calibri,sans-serif;background:#F1F5F9;color:#1E293B}
-  .header{background:#0E3A5C;color:#fff;padding:20px 32px}
-  .header h1{font-size:22px;font-weight:700}
-  .header p{font-size:13px;color:#94C5E8;margin-top:4px}
-  .sub{background:#8DC63F;color:#fff;padding:8px 32px;font-size:12px;font-weight:600}
-  .content{padding:24px 32px;max-width:1400px;margin:0 auto}
-  .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px}
-  .card{background:#fff;border-radius:10px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-  .card .label{font-size:11px;font-weight:600;color:#64748B;text-transform:uppercase;letter-spacing:.05em}
-  .card .value{font-size:32px;font-weight:800;margin-top:6px}
-  .section{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:24px;overflow:hidden}
-  .section-title{padding:14px 20px;font-weight:700;font-size:14px;color:#fff}
-  table{width:100%;border-collapse:collapse;font-size:12px}
-  th{padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#fff;background:#1A4731;white-space:nowrap}
-  td{padding:9px 12px;border-bottom:1px solid #E2E8F0;vertical-align:middle}
-  .badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:700}
-  .at{background:#FEE2E2;color:#991B1B}.ok{background:#DCFCE7;color:#15803D}
-  .print-btn{position:fixed;bottom:24px;right:24px;background:#8DC63F;color:#fff;border:none;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}
-  @media print{.print-btn{display:none}body{background:#fff}.section{box-shadow:none}}
-</style></head><body>
-<div class="header">
-  <h1>AMBIENTAL MS PANTANAL — C.O.I</h1>
-  <p>Relatório de Reposição de Pavimento &nbsp;|&nbsp; Filtro: ${filtroDesc} &nbsp;|&nbsp; ${hoje}</p>
-</div>
-<div class="sub">Central de Operações Integradas — Gerado automaticamente pelo COI</div>
-<div class="content">
-  <div class="cards">
-    <div class="card"><div class="label">Total OS</div><div class="value" style="color:#1E3A5F">${lista.length}</div></div>
-    <div class="card"><div class="label">Atrasadas</div><div class="value" style="color:#DC2626">${atras.length}</div></div>
-    <div class="card"><div class="label">No Prazo</div><div class="value" style="color:#15803D">${okOS.length}</div></div>
-    <div class="card"><div class="label">Taxa de Atraso</div><div class="value" style="color:#D97706">${taxa}%</div></div>
-    <div class="card"><div class="label">Maior Atraso</div><div class="value" style="color:#7C3AED">${atras[0]?.dias||0}d</div></div>
-  </div>
-
-  <div class="section">
-    <div class="section-title" style="background:#1E3A5F">📍 ONDE ATUAR — SITUAÇÃO POR POLO</div>
-    <table><thead><tr><th>#</th><th>Polo</th><th>Supervisor</th><th>Total</th><th>Atrasadas</th><th>No Prazo</th><th>% Atraso</th><th>Prioridade</th></tr></thead>
-    <tbody>${rankRows}</tbody></table>
-  </div>
-
-  <div class="section">
-    <div class="section-title" style="background:#DC2626">⚠ OS ATRASADAS — ${atras.length} ordens (ordenado do mais crítico)</div>
-    <table><thead><tr><th>Nº OS</th><th>Matrícula</th><th>Município</th><th>Polo</th><th>Supervisor</th><th>Serviço</th><th>Código</th><th>Status</th><th>Abertura</th><th>Prazo</th><th>Dias Atraso</th></tr></thead>
-    <tbody>${atrasRows}</tbody></table>
-  </div>
-
-  <div class="section">
-    <div class="section-title" style="background:#15803D">✅ OS NO PRAZO — ${okOS.length} ordens (ordenado pelo prazo mais próximo)</div>
-    <table><thead><tr><th>Nº OS</th><th>Matrícula</th><th>Município</th><th>Polo</th><th>Supervisor</th><th>Serviço</th><th>Código</th><th>Status</th><th>Abertura</th><th>Prazo</th><th>Dias Restantes</th></tr></thead>
-    <tbody>${okRows}</tbody></table>
-  </div>
-
-  <p style="font-size:11px;color:#92400E;margin-top:8px">⚠ Prazos calculados pela nova R.O. (4º Termo Aditivo): 99553/99557/99558 = 5 dias úteis (7 dias em Três Lagoas/Ponta Porã/Douradina/Fátima do Sul). 70707 = prazo programado pelo SIGIS.</p>
-</div>
-<button class="print-btn" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
-</body></html>`;
-
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    window.open(url, "_blank");
   }
 
   function limparFiltrosConsulta() {
@@ -4278,7 +4816,7 @@ function _doExport(){
     const filterMatricula = document.getElementById("search-cliente")?.value.toLowerCase().trim() || "";
     const filterTecnico = document.getElementById("search-tecnico")?.value || "all";
     const filterStatus = document.getElementById("search-status")?.value || "all";
-    const filterServico = document.getElementById("search-tipo")?.value.toLowerCase().trim() || "";
+    const filterServico = normalizarTexto(document.getElementById("search-tipo")?.value.trim() || "");
     const termos = filterServico.split(",").map(t => t.trim()).filter(Boolean);
     const lista = filteredOS.filter(os => {
       if (filterOSNum && !os.numero_os.toLowerCase().includes(filterOSNum)) return false;
@@ -4286,7 +4824,7 @@ function _doExport(){
       if (filterTecnico !== "all" && os.id_tecnico !== parseInt(filterTecnico)) return false;
       if (filterStatus !== "all" && os.status !== filterStatus) return false;
       if (termos.length > 0) {
-        const nome = getServicoName(os.id_tipo_servico).toLowerCase();
+        const nome = normalizarTexto(getServicoName(os.id_tipo_servico));
         const cod = String(os.id_tipo_servico || "");
         if (!termos.some(t => nome.includes(t) || cod.includes(t))) return false;
       }
@@ -4306,7 +4844,7 @@ function _doExport(){
       const dias = Math.floor(Math.abs(now - pr) / 86400000);
       return { sit: venc ? "ATRASADA" : "NO PRAZO", dias, prazo: prazoStr };
     }
-    const proc = listaFiltrada.map(os => { const s = getSit(os); return { num: os.numero_os, mat: getClienteName(os.id_cliente), mun: os.municipio||"", polo: os.polo||"", sup: os.supervisor||"", serv: getServicoName(os.id_tipo_servico), cod: os.id_tipo_servico||"", eq: getTecnicoName(os.id_tecnico), st: os.status, ab: fmtDate(os.data_abertura), prazo: s.prazo, conc: fmtDate(os.data_conclusao), sit: s.sit, dias: s.dias }; });
+    const proc = lista.map(os => { const s = getSit(os); return { num: os.numero_os, mat: getClienteName(os.id_cliente), mun: os.municipio||"", polo: os.polo||"", sup: os.supervisor||"", serv: getServicoName(os.id_tipo_servico), cod: os.id_tipo_servico||"", eq: getTecnicoName(os.id_tecnico), st: os.status, ab: fmtDate(os.data_abertura), prazo: s.prazo, conc: fmtDate(os.data_conclusao), sit: s.sit, dias: s.dias }; });
     const atras = proc.filter(o=>o.sit==="ATRASADA").sort((a,b)=>b.dias-a.dias);
     const okOS  = proc.filter(o=>o.sit==="NO PRAZO").sort((a,b)=>a.prazo.localeCompare(b.prazo));
     const porPolo = {};
@@ -4379,8 +4917,8 @@ function _doExport(){
     const filterMatricula = document.getElementById("search-cliente")?.value.toLowerCase().trim() || "";
     const filterTecnico = document.getElementById("search-tecnico")?.value || "all";
     const filterStatus = document.getElementById("search-status")?.value || "all";
-    const filterServico = document.getElementById("search-tipo")?.value.toLowerCase().trim() || "";
-    
+    const filterServico = normalizarTexto(document.getElementById("search-tipo")?.value.trim() || "");
+
     const finalOSList = filteredOS.filter(os => {
       if (filterOSNum && !os.numero_os.toLowerCase().includes(filterOSNum)) return false;
       if (filterMatricula && !getClienteName(os.id_cliente).toLowerCase().includes(filterMatricula)) return false;
@@ -4389,7 +4927,7 @@ function _doExport(){
       if (filterServico) {
         // Suporte a múltiplos termos separados por vírgula (ex: "99553, 99557, reposição")
         const termos = filterServico.split(",").map(t => t.trim()).filter(Boolean);
-        const nomeServico = getServicoName(os.id_tipo_servico).toLowerCase();
+        const nomeServico = normalizarTexto(getServicoName(os.id_tipo_servico));
         const codigoServico = String(os.id_tipo_servico || "");
         const bate = termos.some(t => nomeServico.includes(t) || codigoServico.includes(t));
         if (!bate) return false;
@@ -4409,19 +4947,21 @@ function _doExport(){
 
     updateConsultaPaginationControls(totalRegistros, startIdx, pageOSList.length, totalPages);
 
-    // Injetar linhas na tabela (5 colunas conforme Wireframe 13.2)
+    // Injetar linhas na tabela (6 colunas — Serviço adicionado para o
+    // usuário poder conferir visualmente o resultado do filtro de Serviço)
     if (pageOSList.length === 0) {
-      container.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">Nenhuma Ordem de Serviço localizada para os filtros aplicados.</td></tr>`;
+      container.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">Nenhuma Ordem de Serviço localizada para os filtros aplicados.</td></tr>`;
       return;
     }
 
     container.innerHTML = "";
     pageOSList.forEach(os => {
       const tr = document.createElement("tr");
-      
+
       tr.innerHTML = `
         <td><strong style="color: var(--text-primary)">${os.numero_os}</strong></td>
         <td>${getClienteName(os.id_cliente)}</td>
+        <td>${getServicoName(os.id_tipo_servico)}</td>
         <td>${getTecnicoName(os.id_tecnico)}</td>
         <td><span class="badge badge-${os.prioridade.toLowerCase()}">${os.prioridade}</span></td>
         <td><span class="badge badge-${os.status.toLowerCase().replace(" ", "-")}">${os.status}</span></td>
@@ -4458,7 +4998,7 @@ function _doExport(){
     const poloFilter = document.getElementById(config.poloSelectId)?.value || "all";
     const supervisorFilter = document.getElementById(config.supervisorSelectId)?.value || "all";
 
-    let list = window.COIDatabase.os.filter(config.predicate);
+    let list = (window.COIDatabase.operacional?.os || []).filter(config.predicate);
     if (cidadeFilter) list = list.filter(os => (os.municipio || "").toLowerCase().includes(cidadeFilter));
     if (poloFilter !== "all") list = list.filter(os => (os.polo||"").trim().toUpperCase() === poloFilter.trim().toUpperCase());
     if (supervisorFilter !== "all") list = list.filter(os => (os.supervisor||"").trim().toUpperCase() === supervisorFilter.trim().toUpperCase());
@@ -4484,9 +5024,11 @@ function _doExport(){
     if (prevBtn) prevBtn.disabled = page <= 1;
     if (nextBtn) nextBtn.disabled = page >= totalPages;
 
-    const colCount = config.showDiasAtraso ? 7 : 6;
+    const colCount = (config.showDiasAtraso ? 7 : 6) + (config.permitirSelecao ? 2 : 0);
     if (pageList.length === 0) {
       tbody.innerHTML = `<tr><td colspan="${colCount}" style="text-align: center; padding: 40px; color: var(--text-muted);">Nenhuma Ordem de Serviço encontrada para os filtros aplicados.</td></tr>`;
+      const toolbar = config.permitirSelecao ? document.getElementById(`${config.prefixo}-programacao-toolbar`) : null;
+      if (toolbar) toolbar.style.display = "none";
       return;
     }
 
@@ -4499,18 +5041,45 @@ function _doExport(){
             return `<td>${diasAtraso !== null && diasAtraso > 0 ? diasAtraso + "d" : "-"}</td>`;
           })()
         : "";
+      // Indicador visual (não mais um portão obrigatório) de que a OS já
+      // atende à regra estrita de Programação (Gerada + aberta hoje).
+      const aguardandoBadge = config.permitirSelecao && isAguardandoProgramacao(os)
+        ? ` <span class="badge badge-aberta" title="Gerada hoje, ainda não programada">Aguardando</span>`
+        : "";
+      const enviadaBadge = config.permitirSelecao && getOSEnviadasProgramacao().has(String(os.id_os))
+        ? ` <span class="badge badge-concluida" title="Já enviada para Programação hoje">Enviada</span>`
+        : "";
       tr.innerHTML = `
+        ${config.permitirSelecao ? `<td><input type="checkbox" class="missao-select-os" data-id-os="${os.id_os}"></td>` : ""}
         <td><strong style="color: var(--text-primary)">${os.numero_os}</strong></td>
         <td>${os.municipio || "-"}</td>
         <td>${os.polo || "-"}</td>
         <td>${os.supervisor || "-"}</td>
         <td>${getServicoName(os.id_tipo_servico)}</td>
+        ${config.permitirSelecao ? `<td>${renderEquipeSelectHTML(os)}</td>` : ""}
         ${diasAtrasoCol}
-        <td><span class="badge badge-${os.status.toLowerCase().replace(" ", "-")}">${os.status}</span></td>
+        <td><span class="badge badge-${os.status.toLowerCase().replace(" ", "-")}">${os.status}</span>${aguardandoBadge}${enviadaBadge}</td>
       `;
-      tr.addEventListener("click", () => openOSDrawer(os.id_os));
+      tr.addEventListener("click", (ev) => {
+        if (ev.target.classList.contains("missao-select-os")) return;
+        if (ev.target.classList.contains("missao-equipe-input")) return;
+        openOSDrawer(os.id_os);
+      });
       tbody.appendChild(tr);
     });
+
+    if (config.permitirSelecao) {
+      const toolbar = document.getElementById(`${config.prefixo}-programacao-toolbar`);
+      if (toolbar) toolbar.style.display = "";
+      const infoEl = document.getElementById(`${config.prefixo}-toolbar-info`);
+      if (infoEl) {
+        const n = getEquipesProgramacao().length;
+        infoEl.textContent = `${n} equipe${n === 1 ? "" : "s"} cadastrada${n === 1 ? "" : "s"}`;
+      }
+      const container = tbody.closest(".table-card") || tbody;
+      wireProgramacaoToolbar(container, config.prefixo, config.onRefresh);
+      wireSelecaoEEnvio(container, config.prefixo, config.onRefresh || (() => {}));
+    }
   }
 
   // Painel IEA — Indicador de Eficiência no Atendimento (fórmula oficial
@@ -4531,7 +5100,7 @@ function _doExport(){
     // dos 35 códigos IEA nem exclusão de Agendadas/Geradas), pra dar visão
     // operacional ampla. Só a tela "Indicadores Contratuais" aplica esses
     // filtros estritos do contrato.
-    const allOS = window.COIDatabase.os;
+    const allOS = window.COIDatabase.operacional?.os || [];
     const qt = allOS.length;
     const baixadas = allOS.filter(os => os.status === "Concluída").length;
     const qa = allOS.filter(os => {
@@ -4561,7 +5130,7 @@ function _doExport(){
       const poloFilter = document.getElementById("atrasadas-search-polo")?.value || "all";
       const supervisorFilter = document.getElementById("atrasadas-search-supervisor")?.value || "all";
 
-      const pendentes = window.COIDatabase.os.filter(os => os.status !== "Concluída" && os.status !== "Cancelada");
+      const pendentes = (window.COIDatabase.operacional?.os || []).filter(os => os.status !== "Concluída" && os.status !== "Cancelada");
       const pendentesFiltradas = pendentes.filter(os => {
         if (cidadeFilter && !(os.municipio || "").toLowerCase().includes(cidadeFilter)) return false;
         if (poloFilter !== "all" && os.polo !== poloFilter) return false;
@@ -4644,7 +5213,7 @@ function _doExport(){
     const cidadeFilter = document.getElementById("atrasadas-search-cidade")?.value.toLowerCase().trim() || "";
     const supervisorFilter = document.getElementById("atrasadas-search-supervisor")?.value || "all";
 
-    const atrasadas = window.COIDatabase.os.filter(os => {
+    const atrasadas = (window.COIDatabase.operacional?.os || []).filter(os => {
       if (os.status === "Concluída" || os.status === "Cancelada") return false;
       if (!isAtrasadaReal(os)) return false;
       if (cidadeFilter && !(os.municipio || "").toLowerCase().includes(cidadeFilter)) return false;
@@ -4711,82 +5280,498 @@ function _doExport(){
            prazo.getUTCDate() === hoje.getUTCDate();
   }
 
-  function renderVenceHoje() {
-    popularFiltros();
-    // Painel "Realidade do Momento" — calculado sobre TODAS as OS que vencem
-    // hoje, aplicando os mesmos filtros de Cidade/Polo/Supervisor da tela.
-    if (window.COIDatabase) {
-      const cidadeFilter = document.getElementById("vencehoje-search-cidade")?.value.toLowerCase().trim() || "";
-      const poloFilter = document.getElementById("vencehoje-search-polo")?.value || "all";
-      const supervisorFilter = document.getElementById("vencehoje-search-supervisor")?.value || "all";
+  // Universo da Missão Operacional: TODAS as OS com prazo hoje, incluindo as
+  // já concluídas — diferente de isVenceHoje (que exclui Concluída/Cancelada,
+  // pois serve para saber o que ainda falta atender). Necessário para
+  // calcular concluídas/pendentes/percentual do card "Missão Operacional".
+  function isPrazoHoje(os) {
+    if (!os.data_prazo) return false;
+    const prazo = new Date(os.data_prazo);
+    const hoje = state.currentSystemTime;
+    return prazo.getUTCFullYear() === hoje.getUTCFullYear() &&
+           prazo.getUTCMonth() === hoje.getUTCMonth() &&
+           prazo.getUTCDate() === hoje.getUTCDate();
+  }
 
-      const venceHojeList = window.COIDatabase.os.filter(os => {
-        if (!isVenceHoje(os)) return false;
-        if (cidadeFilter && !(os.municipio || "").toLowerCase().includes(cidadeFilter)) return false;
-        if (poloFilter !== "all" && os.polo !== poloFilter) return false;
-        if (supervisorFilter !== "all" && os.supervisor !== supervisorFilter) return false;
-        return true;
-      });
+  // Ponto de extensão: novos status operacionais confirmados no SIGIS (com
+  // grafia exata validada em dados reais) podem ser adicionados a este
+  // array sem alterar a lógica de isZonaAtencao.
+  const STATUS_ZONA_ATENCAO = ["Disponível para Coletor"];
 
-      const porCidade = {};
-      venceHojeList.forEach(os => {
-        const cidade = os.municipio || "Não informado";
-        porCidade[cidade] = (porCidade[cidade] || 0) + 1;
-      });
-      const rankingCidades = Object.entries(porCidade)
-        .map(([nome, total]) => ({ nome, total }))
-        .sort((a, b) => b.total - a.total)
-        .slice(0, 5);
+  function isZonaAtencao(os) {
+    return isVenceHoje(os) && STATUS_ZONA_ATENCAO.includes(os.situacao_original);
+  }
 
-      const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-      setText("vencehoje-total", venceHojeList.length.toLocaleString("pt-BR"));
-      setText("vencehoje-cidades", Object.keys(porCidade).length.toLocaleString("pt-BR"));
-      setText("vencehoje-cidade-critica", rankingCidades.length > 0 ? `${rankingCidades[0].nome} (${rankingCidades[0].total})` : "-");
+  // Escopo diário (Decisão do dono do sistema, 05/08/2026 — substitui o
+  // escopo mensal de 02/08/2026): a Missão Operacional deve trabalhar
+  // apenas com a operação do dia — nada de backlog histórico (Geradas de
+  // dias anteriores do mesmo mês) nem serviços futuros. Compara o dia
+  // exato de data_abertura com "hoje" (mesmo padrão de isPrazoHoje/
+  // isVenceHoje). Para buscar Geradas de outros dias, o supervisor usa a
+  // Consulta Operacional (filtros de data), não os indicadores da Missão.
+  // Serviços que NÃO são obrigação de campo da empresa (fiscalização,
+  // verificação, pesquisa/notificação — não geram execução, então não
+  // devem entrar na fila de programação). Ponto de extensão único: para
+  // adicionar/remover um código, edite só este array — nenhuma outra
+  // parte do sistema precisa mudar. Lista definida pelo dono do sistema
+  // em 02/08/2026.
+  const SERVICOS_FORA_ESCOPO_PROGRAMACAO = new Set([
+    5370, 5369, 5368, 5362, 141, 5092, 142, 5339, 5093, 5350,
+    5343, 5024, 144, 5022, 121, 5088, 5084, 5342, 1830, 5071,
+    5021, 143
+  ]);
 
-      const rankingContainer = document.getElementById("vencehoje-ranking-cidades");
-      if (rankingContainer) {
-        if (rankingCidades.length === 0) {
-          rankingContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">Nenhuma OS vence hoje para os filtros aplicados.</div>`;
-        } else {
-          renderInsightList(rankingContainer, rankingCidades.map(c => ({ nome: c.nome, score: c.total })), "score", "OS vencendo hoje");
-        }
-      }
+  function isAguardandoProgramacao(os) {
+    if (os.situacao_original !== "Gerada") return false;
+    if (!os.data_abertura) return false;
+    if (SERVICOS_FORA_ESCOPO_PROGRAMACAO.has(Number(os.id_tipo_servico))) return false;
+    const abertura = new Date(os.data_abertura);
+    // Correção (05/08/2026): usa a data real do dispositivo, isolada de
+    // state.currentSystemTime (mesmo padrão já aplicado no Mini BI, ver
+    // visualizarRelatorio()) — a fila de Programação precisa da data real
+    // para funcionar mesmo com o restante do sistema em modo SIMULACAO.
+    // Regra de negócio inalterada: só OS Geradas, do dia, sem Agendadas,
+    // sem backlog mensal. Ver Master Project.
+    const hoje = new Date();
+    return abertura.getUTCFullYear() === hoje.getUTCFullYear() &&
+           abertura.getUTCMonth() === hoje.getUTCMonth() &&
+           abertura.getUTCDate() === hoje.getUTCDate();
+  }
 
-      // Ranking de Criticidade por Polo (%): (vence hoje no Polo) / (total
-      // de OS pendentes do Polo) × 100 — normaliza por tamanho do Polo,
-      // diferente do ranking de cidades acima (que é por volume bruto).
-      const todosPendentes = window.COIDatabase.os.filter(os => os.status !== "Concluída" && os.status !== "Cancelada");
-      const pendentesPorPolo = {};
-      todosPendentes.forEach(os => {
-        const polo = os.polo || "Não informado";
-        pendentesPorPolo[polo] = (pendentesPorPolo[polo] || 0) + 1;
-      });
-      const venceHojePorPolo = {};
-      venceHojeList.forEach(os => {
-        const polo = os.polo || "Não informado";
-        venceHojePorPolo[polo] = (venceHojePorPolo[polo] || 0) + 1;
-      });
-      const rankingCriticidade = Object.entries(venceHojePorPolo)
-        .map(([polo, total]) => {
-          const totalPendentesPolo = pendentesPorPolo[polo] || total;
-          const percentual = totalPendentesPolo > 0 ? (total / totalPendentesPolo) * 100 : 0;
-          return { nome: `${polo} (${total}/${totalPendentesPolo})`, score: Math.round(percentual * 10) / 10 };
-        })
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 5);
+  // Persistência local (localStorage) das OS já "Enviadas para Programação"
+  // pelo supervisor. Fica só neste navegador/dispositivo — não sincroniza
+  // entre supervisores (decisão explícita: resolver o fluxo de 1 supervisor
+  // primeiro, sincronização entre dispositivos fica para fase futura).
+  const OS_PROGRAMACAO_KEY = "coi_os_enviadas_programacao";
 
-      const criticidadeContainer = document.getElementById("vencehoje-ranking-criticidade");
-      if (criticidadeContainer) {
-        if (rankingCriticidade.length === 0) {
-          criticidadeContainer.innerHTML = `<div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">Nenhuma OS vence hoje para os filtros aplicados.</div>`;
-        } else {
-          renderInsightList(criticidadeContainer, rankingCriticidade, "score", "% do Polo");
-        }
+  function getOSEnviadasProgramacao() {
+    try {
+      const raw = localStorage.getItem(OS_PROGRAMACAO_KEY);
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch (e) {
+      return new Set();
+    }
+  }
+
+  function marcarOSEnviadasProgramacao(idsOS) {
+    const atuais = getOSEnviadasProgramacao();
+    idsOS.forEach(id => atuais.add(String(id)));
+    try {
+      localStorage.setItem(OS_PROGRAMACAO_KEY, JSON.stringify([...atuais]));
+    } catch (e) {
+      // localStorage indisponível (modo privado, quota excedida) — a marcação
+      // não persiste entre reloads, mas não impede a geração da lista.
+    }
+  }
+
+  // Equipes cadastradas pelo supervisor (localStorage, mesmo escopo local
+  // das OS enviadas). O supervisor cria as equipes uma vez e depois só
+  // seleciona na lista — não precisa digitar o nome a cada OS.
+  const EQUIPES_PROGRAMACAO_KEY = "coi_equipes_programacao";
+
+  function getEquipesProgramacao() {
+    try {
+      const raw = localStorage.getItem(EQUIPES_PROGRAMACAO_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function salvarEquipesProgramacao(equipes) {
+    try {
+      localStorage.setItem(EQUIPES_PROGRAMACAO_KEY, JSON.stringify(equipes));
+    } catch (e) {
+      // localStorage indisponível — equipes valem só nesta sessão.
+    }
+  }
+
+  function adicionarEquipeProgramacao(nome) {
+    const limpo = String(nome || "").trim();
+    if (!limpo) return false;
+    const equipes = getEquipesProgramacao();
+    if (equipes.some(e => e.toLowerCase() === limpo.toLowerCase())) return false;
+    equipes.push(limpo);
+    equipes.sort((a, b) => a.localeCompare(b, "pt-BR"));
+    salvarEquipesProgramacao(equipes);
+    return true;
+  }
+
+  function removerEquipeProgramacao(nome) {
+    salvarEquipesProgramacao(getEquipesProgramacao().filter(e => e !== nome));
+  }
+
+  // Gera a lista de programação (Nº OS, Cidade, Serviço, Equipe, Prioridade,
+  // Vencimento) das OS selecionadas, em formato próprio para impressão —
+  // mesmo padrão já usado pela geração de relatório de Consulta Operacional.
+  function gerarListaProgramacao(lista) {
+    const hoje = state.currentSystemTime.toLocaleDateString("pt-BR");
+    const linhas = lista.map(os => `
+      <tr>
+        <td><strong>${String(os.numero_os || "").replace(/^OS-/, "")}</strong></td>
+        <td>${os.municipio || "-"}</td>
+        <td>${os.id_tipo_servico ? `${os.id_tipo_servico} - ` : ""}${getServicoName(os.id_tipo_servico)}</td>
+        <td>${os.equipeProgramacao || getTecnicoName(os.id_tecnico)}</td>
+        <td>${os.prioridade || "-"}</td>
+        <td>${os.data_prazo ? new Date(os.data_prazo).toLocaleDateString("pt-BR") : "-"}</td>
+      </tr>
+    `).join("");
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lista de Programação — ${hoje}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Calibri,sans-serif;background:#F1F5F9;color:#1E293B;padding:24px}
+  h1{font-size:20px;margin-bottom:4px}
+  p{font-size:13px;color:#64748B;margin-bottom:20px}
+  table{width:100%;border-collapse:collapse;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);border-radius:8px;overflow:hidden}
+  th{background:#0E3A5C;color:#fff;padding:10px 12px;text-align:left;font-size:12px}
+  td{padding:9px 12px;border-bottom:1px solid #E2E8F0;font-size:13px}
+  .print-btn{position:fixed;bottom:24px;right:24px;background:#8DC63F;color:#fff;border:none;padding:12px 22px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  @media print{.print-btn{display:none}body{background:#fff}}
+</style></head><body>
+<h1>Lista de Programação</h1>
+<p>Gerada em ${hoje} · ${lista.length} OS</p>
+<table><thead><tr><th>Nº OS</th><th>Cidade</th><th>Serviço</th><th>Equipe</th><th>Prioridade</th><th>Vencimento</th></tr></thead>
+<tbody>${linhas}</tbody></table>
+<button class="print-btn" onclick="window.print()">🖨 Imprimir / Salvar PDF</button>
+</body></html>`;
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    window.open(URL.createObjectURL(blob), "_blank");
+  }
+
+  // Polo em foco na tela: para usuário "polo", é sempre o próprio polo da
+  // sessão (login → polo, via window.COIAuth.getSessionInfo); para
+  // admin/gestor, é o polo selecionado nos cards (mesmo mecanismo de
+  // seleção já existente em state.vencehojeSelectedPolo).
+  function getPoloEmFoco() {
+    const session = window.COIAuth?.getSessionInfo ? window.COIAuth.getSessionInfo() : null;
+    if (session && session.papel === "polo") return session.polo;
+    return state.vencehojeSelectedPolo;
+  }
+
+  function calcularMissaoStats(poloEmFoco) {
+    const todasOS = window.COIDatabase?.operacional?.os || [];
+    const lista = todasOS.filter(os => isPrazoHoje(os) && (!poloEmFoco || os.polo === poloEmFoco));
+    const total = lista.length;
+    const concluidas = lista.filter(os => os.status === "Concluída").length;
+    const percentual = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+    return { total, concluidas, percentual };
+  }
+
+  // Cabeçalho do Polo + card Missão Operacional + Zona de Atenção +
+  // Aguardando Programação — topo fixo da tela, sempre recalculado para o
+  // Polo em foco, independente de qual sub-visão (cards ou lista) está ativa.
+  function renderMissaoTopo(poloEmFoco) {
+    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+    // UX (05/08/2026): removida a linha "👤 Administrador · 📅 data" do topo —
+    // não agregava valor operacional (nome do próprio usuário logado + data
+    // que, em modo SIMULACAO, exibe uma referência incorreta). Ver Master Project.
+    setText("missao-polo-nome", poloEmFoco ? `📍 POLO ${poloEmFoco.toUpperCase()}` : "📍 —");
+
+    const stats = calcularMissaoStats(poloEmFoco);
+    setText("missao-total", stats.total.toLocaleString("pt-BR"));
+    setText("missao-concluidas", stats.concluidas.toLocaleString("pt-BR"));
+    setText("missao-progresso-dia-pct", `${stats.percentual}%`);
+    const barraDia = document.getElementById("missao-progresso-dia-fill");
+    if (barraDia) barraDia.style.width = `${stats.percentual}%`;
+
+    const todasOS = window.COIDatabase?.operacional?.os || [];
+
+    // KPIs "Atrasadas" e "Vencem hoje" — reaproveitam isAtrasadaReal e
+    // isVenceHoje, já existentes e usados em outras telas; aqui só contam
+    // (sem alterar nenhuma das duas funções) para o polo em foco.
+    const atrasadasCount = todasOS.filter(os =>
+      os.status !== "Concluída" && os.status !== "Cancelada" &&
+      isAtrasadaReal(os) && (!poloEmFoco || os.polo === poloEmFoco)
+    ).length;
+    setText("missao-atrasadas", atrasadasCount.toLocaleString("pt-BR"));
+
+    const vencemHojeCount = todasOS.filter(os => isVenceHoje(os) && (!poloEmFoco || os.polo === poloEmFoco)).length;
+    setText("missao-vencem-hoje", vencemHojeCount.toLocaleString("pt-BR"));
+    const zonaList = todasOS
+      .filter(os => isZonaAtencao(os) && (!poloEmFoco || os.polo === poloEmFoco))
+      .sort((a, b) => new Date(a.data_prazo) - new Date(b.data_prazo));
+    renderMissaoListaColapsavel("missao-zona-atencao", zonaList, false);
+    aplicarSemaforo("missao-zona-atencao-header", zonaList.length, [
+      { max: 0, classe: "kpi-card-ok" },
+      { max: 5, classe: "kpi-card-atencao" },
+      { max: Infinity, classe: "kpi-card-critico" }
+    ]);
+
+    // "Onde está o problema / o que exige ação agora": combinação
+    // Cidade+Serviço com mais OS na própria Zona de Atenção já filtrada
+    // acima — não é um cálculo novo, só agrupa o que já foi filtrado
+    // (mesmos critérios de isZonaAtencao) para responder em 1 leitura.
+    const porCidadeServico = {};
+    zonaList.forEach(os => {
+      const cidade = os.municipio || "Não informado";
+      const servico = getServicoName(os.id_tipo_servico);
+      const chave = `${cidade}|||${servico}`;
+      if (!porCidadeServico[chave]) porCidadeServico[chave] = { cidade, servico, total: 0 };
+      porCidadeServico[chave].total++;
+    });
+    const piorCombinacao = Object.values(porCidadeServico).sort((a, b) => b.total - a.total)[0];
+
+    const problemaBlock = document.getElementById("missao-problema-block");
+    const problemaBody = document.getElementById("missao-problema-body");
+    if (problemaBlock && problemaBody) {
+      if (piorCombinacao) {
+        problemaBlock.classList.remove("missao-problema-ok");
+        problemaBody.innerHTML = `
+          <span class="missao-problema-cidade">${piorCombinacao.cidade}</span>
+          <span class="missao-problema-servico">${piorCombinacao.servico}</span>
+          <span class="missao-problema-qtd">${piorCombinacao.total} OS vencem hoje</span>
+          <button type="button" class="missao-problema-ver-btn" id="missao-problema-ver-btn">Ver OS</button>
+        `;
+        // Ação direta: abre a mesma lista já usada pela pill "Zona de
+        // Atenção" (mesmo dado, mesmo filtro isZonaAtencao) — sem nova
+        // consulta.
+        document.getElementById("missao-problema-ver-btn")?.addEventListener("click", () => {
+          const body = document.getElementById("missao-zona-atencao-body");
+          if (body) {
+            body.style.display = "";
+            body.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }
+        });
+      } else {
+        problemaBlock.classList.add("missao-problema-ok");
+        problemaBody.innerHTML = `<span class="missao-problema-vazio">Nenhum problema crítico agora</span>`;
       }
     }
 
-    // Alterna entre resumo por Polo (padrão) e a lista de OS de um Polo
-    // específico (drill-down, ao clicar num Polo do resumo).
+    const enviadasProgramacao = getOSEnviadasProgramacao();
+    // Janela de vencimento: por padrão só o que vence até hoje; o supervisor
+    // amplia escolhendo uma data futura no calendário da própria lista.
+    const limiteStr = state.missaoProgramacaoDataLimite;
+    // Correção (05/08/2026): data real do dispositivo, não state.currentSystemTime
+    // — mesmo motivo de isAguardandoProgramacao() acima. Sem isso, o teto padrão
+    // de vencimento ficaria preso em 20/07/2026 e zeraria a fila de novo.
+    const dataLimite = limiteStr ? new Date(`${limiteStr}T23:59:59`) : new Date();
+    if (!limiteStr) dataLimite.setUTCHours(23, 59, 59, 999);
+    const aguardandoList = todasOS
+      .filter(os => isAguardandoProgramacao(os)
+                 && !enviadasProgramacao.has(String(os.id_os))
+                 && (!poloEmFoco || os.polo === poloEmFoco)
+                 && (!os.data_prazo || new Date(os.data_prazo) <= dataLimite))
+      .sort((a, b) => new Date(a.data_prazo) - new Date(b.data_prazo));
+    // Card "Aguardando Programação" (05/08/2026, UX) — substitui "Pendentes
+    // (Total)", que misturava backlog histórico/futuro com o dia atual.
+    // Reaproveita o mesmo aguardandoList já calculado acima para o pill.
+    setText("missao-pendentes", aguardandoList.length.toLocaleString("pt-BR"));
+    renderMissaoListaColapsavel("missao-aguardando", aguardandoList, true);
+    aplicarSemaforo("missao-aguardando-header", aguardandoList.length, [
+      { max: 0, classe: "kpi-card-ok" },
+      { max: 20, classe: "kpi-card-atencao" },
+      { max: Infinity, classe: "kpi-card-programacao" }
+    ]);
+  }
+
+  // Semáforo visual: classifica uma contagem já calculada numa faixa de cor
+  // (apresentação apenas — não recalcula nem refiltra nada). "faixas" é uma
+  // lista ordenada de { max, classe }; a primeira faixa cujo "max" cobre o
+  // valor vence.
+  function aplicarSemaforo(elId, valor, faixas) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    el.classList.remove("kpi-card-ok", "kpi-card-atencao", "kpi-card-critico", "kpi-card-programacao");
+    const faixa = faixas.find(f => valor <= f.max);
+    if (faixa) el.classList.add(faixa.classe);
+  }
+
+  // Preenche um bloco colapsável (Zona de Atenção / Aguardando Programação)
+  // com a contagem no cabeçalho e a lista OS/Cidade/Serviço/Equipe/
+  // [Prioridade]/Vencimento ordenada pela mais urgente. comCheckbox liga o
+  // fluxo real de seleção múltipla + "Enviar para Programação" (Aguardando
+  // Programação) — Zona de Atenção continua só leitura (comCheckbox=false).
+  // Select de equipe reaproveitado por qualquer lista com seleção habilitada
+  // (painel Aguardando Programação e, desde 05/08/2026, a lista Vence Hoje).
+  function renderEquipeSelectHTML(os) {
+    const equipes = getEquipesProgramacao();
+    const atual = getTecnicoName(os.id_tecnico);
+    const opts = equipes.map(e => `<option value="${e}"${e === atual ? " selected" : ""}>${e}</option>`).join("");
+    return `<select class="missao-equipe-input" data-id-os="${os.id_os}">
+      <option value="">— definir —</option>
+      ${!equipes.includes(atual) && atual && atual !== "Sem Técnico" ? `<option value="${atual}" selected>${atual}</option>` : ""}
+      ${opts}
+    </select>`;
+  }
+
+  // Liga checkboxes .missao-select-os + botão #${prefixo}-enviar-btn dentro de
+  // `container`. Busca as OS selecionadas direto em window.COIDatabase (não
+  // por uma lista fechada em closure), pra funcionar corretamente mesmo após
+  // paginação/filtro trocar o conteúdo da tela entre a renderização e o clique.
+  function wireSelecaoEEnvio(container, prefixo, onEnviado) {
+    if (!container) return;
+    const checkboxes = container.querySelectorAll(".missao-select-os");
+    const countLabel = document.getElementById(`${prefixo}-select-count`);
+    const enviarBtn = document.getElementById(`${prefixo}-enviar-btn`);
+
+    const atualizarContadorSelecao = () => {
+      const marcadas = container.querySelectorAll(".missao-select-os:checked").length;
+      if (countLabel) countLabel.textContent = `${marcadas} selecionada${marcadas === 1 ? "" : "s"}`;
+      if (enviarBtn) enviarBtn.disabled = marcadas === 0;
+    };
+    checkboxes.forEach(cb => cb.addEventListener("change", atualizarContadorSelecao));
+    atualizarContadorSelecao();
+
+    if (enviarBtn && !enviarBtn.dataset.wired) {
+      enviarBtn.dataset.wired = "1";
+      enviarBtn.addEventListener("click", () => {
+        const idsSelecionados = [...container.querySelectorAll(".missao-select-os:checked")].map(cb => cb.getAttribute("data-id-os"));
+        if (idsSelecionados.length === 0) return;
+        const todasOS = window.COIDatabase.operacional?.os || [];
+        const osSelecionadas = idsSelecionados
+          .map(id => todasOS.find(os => String(os.id_os) === id))
+          .filter(Boolean)
+          .map(os => {
+            const campo = container.querySelector(`.missao-equipe-input[data-id-os="${CSS.escape(String(os.id_os))}"]`);
+            const equipeEditada = campo && campo.value.trim() ? campo.value.trim() : getTecnicoName(os.id_tecnico);
+            return { ...os, equipeProgramacao: equipeEditada };
+          });
+        gerarListaProgramacao(osSelecionadas);
+        marcarOSEnviadasProgramacao(idsSelecionados);
+        onEnviado();
+      });
+    }
+  }
+
+  function renderMissaoListaColapsavel(prefixo, lista, comCheckbox) {
+    const countEl = document.getElementById(`${prefixo}-count`);
+    if (countEl) countEl.textContent = lista.length.toLocaleString("pt-BR");
+
+    const body = document.getElementById(`${prefixo}-body`);
+    if (!body) return;
+
+    // Barra de filtro por vencimento + gestão de equipes (só na fila de
+    // Programação). Fica acima da tabela para continuar visível mesmo
+    // quando a lista está vazia.
+    // Correção (05/08/2026): data real do dispositivo — o campo de calendário
+    // "Vencimento até" deve mostrar/aceitar o dia real de hoje como mínimo,
+    // não 20/07/2026 (state.currentSystemTime, congelada).
+    const hojeISO = new Date().toISOString().slice(0, 10);
+    const equipes = getEquipesProgramacao();
+    // UX (05/08/2026): "Enviar para Programação" movido para a barra de topo
+    // (ao lado de "+ Cadastrar" equipe) — antes ficava depois da tabela toda,
+    // exigindo rolar a lista inteira pra encontrar a ação. Ver Master Project.
+    const barraTopo = comCheckbox ? `
+      <div class="missao-programacao-toolbar">
+        <label class="missao-toolbar-item">
+          Vencimento até
+          <input type="date" id="${prefixo}-data-limite" min="${hojeISO}" value="${state.missaoProgramacaoDataLimite || hojeISO}">
+        </label>
+        <label class="missao-toolbar-item">
+          Nova equipe
+          <input type="text" id="${prefixo}-nova-equipe" placeholder="Ex: Equipe 7201">
+        </label>
+        <button type="button" class="import-btn" id="${prefixo}-add-equipe-btn">+ Cadastrar</button>
+        <span class="missao-toolbar-info">${equipes.length} equipe${equipes.length === 1 ? "" : "s"} cadastrada${equipes.length === 1 ? "" : "s"}</span>
+        <span class="missao-programacao-actions">
+          <span class="missao-select-count" id="${prefixo}-select-count">0 selecionadas</span>
+          <button type="button" class="import-btn" id="${prefixo}-enviar-btn" disabled>Enviar para Programação</button>
+        </span>
+      </div>
+    ` : "";
+
+    if (lista.length === 0) {
+      body.innerHTML = `${barraTopo}<div class="missao-empty">Nenhuma OS encontrada.</div>`;
+      if (comCheckbox) wireProgramacaoToolbar(body, prefixo);
+      return;
+    }
+
+    const linhas = lista.map(os => `
+      <tr data-id-os="${os.id_os}">
+        ${comCheckbox ? `<td><input type="checkbox" class="missao-select-os" data-id-os="${os.id_os}"></td>` : ""}
+        <td>${String(os.numero_os || "").replace(/^OS-/, "")}</td>
+        <td>${os.municipio || "-"}</td>
+        <td>${os.id_tipo_servico ? `${os.id_tipo_servico} - ` : ""}${getServicoName(os.id_tipo_servico)}</td>
+        <td>${comCheckbox ? renderEquipeSelectHTML(os) : getTecnicoName(os.id_tecnico)}</td>
+        ${comCheckbox ? `<td>${os.prioridade || "-"}</td>` : ""}
+        <td>${os.data_prazo ? new Date(os.data_prazo).toLocaleDateString("pt-BR") : "-"}</td>
+      </tr>
+    `).join("");
+
+    body.innerHTML = `
+      ${barraTopo}
+      <table class="missao-mini-table">
+        <thead>
+          <tr>
+            ${comCheckbox ? `<th></th>` : ""}
+            <th>Nº OS</th><th>Cidade</th><th>Serviço</th><th>Equipe</th>${comCheckbox ? `<th>Prioridade</th>` : ""}<th>Vencimento</th>
+          </tr>
+        </thead>
+        <tbody>${linhas}</tbody>
+      </table>
+    `;
+
+    if (comCheckbox) wireProgramacaoToolbar(body, prefixo);
+
+    body.querySelectorAll("tr[data-id-os]").forEach(tr => {
+      tr.addEventListener("click", (ev) => {
+        if (ev.target.classList.contains("missao-select-os")) return;
+        if (ev.target.classList.contains("missao-equipe-input")) return;
+        openOSDrawer(tr.getAttribute("data-id-os"));
+      });
+    });
+
+    if (comCheckbox) {
+      wireSelecaoEEnvio(body, prefixo, () => renderMissaoTopo(getPoloEmFoco()));
+    }
+  }
+
+  // Liga o calendário de vencimento e o cadastro de equipes da fila de
+  // Programação. Ambos re-renderizam a lista ao final (a lista inteira é
+  // reconstruída, então os listeners antigos são descartados junto).
+  function wireProgramacaoToolbar(body, prefixo, onChange) {
+    const refresh = onChange || (() => renderMissaoTopo(getPoloEmFoco()));
+
+    // Guarda contra listeners duplicados: no painel Aguardando Programação
+    // `body` é recriado a cada render (innerHTML), então nunca repete; já na
+    // lista Vence Hoje (05/08/2026) a barra é estática, então sem essa guarda
+    // cada re-render (filtro/página) empilharia um novo listener.
+    const dataInput = document.getElementById(`${prefixo}-data-limite`);
+    if (dataInput && !dataInput.dataset.wired) {
+      dataInput.dataset.wired = "1";
+      dataInput.addEventListener("change", () => {
+        state.missaoProgramacaoDataLimite = dataInput.value || "";
+        refresh();
+        const corpo = document.getElementById(`${prefixo}-body`);
+        if (corpo) corpo.style.display = "";
+      });
+    }
+
+    const novaEquipeInput = document.getElementById(`${prefixo}-nova-equipe`);
+    const addBtn = document.getElementById(`${prefixo}-add-equipe-btn`);
+    if (addBtn && !addBtn.dataset.wired) {
+      addBtn.dataset.wired = "1";
+      const cadastrar = () => {
+        if (!novaEquipeInput) return;
+        if (adicionarEquipeProgramacao(novaEquipeInput.value)) {
+          novaEquipeInput.value = "";
+          refresh();
+          const corpo = document.getElementById(`${prefixo}-body`);
+          if (corpo) corpo.style.display = "";
+        }
+      };
+      addBtn.addEventListener("click", cadastrar);
+      novaEquipeInput?.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") { ev.preventDefault(); cadastrar(); }
+      });
+    }
+  }
+
+  function renderVenceHoje() {
+    popularFiltros();
+    renderMissaoTopo(getPoloEmFoco());
+    // Cards de Polo e Painel do Polo (Cidade/Equipe/Serviço) ficam sempre
+    // visíveis no topo da tela, independente de qual sub-visão do
+    // table-card (resumo ou drill-down) está ativa abaixo.
+    renderVenceHojePoloSummary();
+
+    // Alterna, dentro do table-card, entre o placeholder de resumo (padrão)
+    // e a lista de OS de um Polo específico (drill-down, ao clicar em "Ver
+    // todas as OS deste polo").
     const poloSelect = document.getElementById("vencehoje-search-polo");
     const poloAtual = poloSelect?.value || "all";
     const summaryTable = document.getElementById("vencehoje-polo-summary-table");
@@ -4800,14 +5785,13 @@ function _doExport(){
       if (osListTable) osListTable.style.display = "none";
       if (paginationBar) paginationBar.style.display = "none";
       if (voltarBtn) voltarBtn.style.display = "none";
-      if (titulo) titulo.textContent = "OS a Vencer Hoje por Polo";
-      renderVenceHojePoloSummary();
+      if (titulo) titulo.textContent = "Missão Operacional por Polo";
     } else {
       if (summaryTable) summaryTable.style.display = "none";
       if (osListTable) osListTable.style.display = "";
       if (paginationBar) paginationBar.style.display = "";
       if (voltarBtn) voltarBtn.style.display = "";
-      if (titulo) titulo.textContent = `OS a Vencer Hoje — ${poloAtual}`;
+      if (titulo) titulo.textContent = `Missão Operacional — ${poloAtual}`;
       renderOSSubList({
         predicate: isVenceHoje,
         tbodyId: "vencehoje-table-body",
@@ -4817,188 +5801,130 @@ function _doExport(){
         cidadeInputId: "vencehoje-search-cidade",
         poloSelectId: "vencehoje-search-polo",
         supervisorSelectId: "vencehoje-search-supervisor",
-        pageStateKey: "vencehojePage"
+        pageStateKey: "vencehojePage",
+        // Unificação da jornada operacional (05/08/2026): a própria lista
+        // Vence Hoje passa a permitir selecionar OS, definir equipe e enviar
+        // para Programação — ver Master Project, Decisão nº 26.
+        permitirSelecao: true,
+        prefixo: "vencehoje",
+        onRefresh: () => renderVenceHoje()
       });
     }
   }
 
-  // Visão de resumo: agrupa as OS "vence hoje" por Polo, com percentual de
-  // criticidade. Clicar num Polo abre a lista de OS daquele Polo.
+  // Visão de resumo: lista os Polos (cards) — oculta para usuário "polo",
+  // que já enxerga só o próprio polo via applyPoloFilter — e mostra, para o
+  // Polo em foco, o Painel do Polo (alternador Cidade/Equipe/Serviço).
   function renderVenceHojePoloSummary() {
     const cardsContainer = document.getElementById("vencehoje-polo-cards");
-    const detailPanel = document.getElementById("vencehoje-polo-detail");
     if (!cardsContainer || !window.COIDatabase) return;
 
-    const cidadeFilter = document.getElementById("vencehoje-search-cidade")?.value.toLowerCase().trim() || "";
-    const supervisorFilter = document.getElementById("vencehoje-search-supervisor")?.value || "all";
+    const session = window.COIAuth?.getSessionInfo ? window.COIAuth.getSessionInfo() : null;
+    const isPoloUser = !!(session && session.papel === "polo");
+    cardsContainer.style.display = isPoloUser ? "none" : "";
 
-    const aplicaFiltros = (os) => {
-      if (cidadeFilter && !(os.municipio || "").toLowerCase().includes(cidadeFilter)) return false;
-      if (supervisorFilter !== "all" && os.supervisor !== supervisorFilter) return false;
-      return true;
-    };
-
-    const venceHoje = window.COIDatabase.os.filter(os => isVenceHoje(os) && aplicaFiltros(os));
-    const atrasadas = window.COIDatabase.os.filter(os =>
-      os.status !== "Concluída" && os.status !== "Cancelada" &&
-      isAtrasadaReal(os) && aplicaFiltros(os)
-    );
-
-    // Agrupa por Polo: vence hoje + atrasadas + cidades + amostra de OS
-    const porPolo = {};
-    const garantePolo = (polo) => {
-      if (!porPolo[polo]) porPolo[polo] = { hoje: 0, atraso: 0, cidades: {}, osHoje: [], osAtraso: [] };
-      return porPolo[polo];
-    };
-    venceHoje.forEach(os => {
-      const p = garantePolo(os.polo || "Não informado");
-      p.hoje++;
-      const cidade = os.municipio || "Não informado";
-      p.cidades[cidade] = (p.cidades[cidade] || 0) + 1;
-      p.osHoje.push(os);
-    });
-    atrasadas.forEach(os => {
-      const p = garantePolo(os.polo || "Não informado");
-      p.atraso++;
-      p.osAtraso.push(os);
-    });
-
-    // Pendentes por polo (para calcular a taxa de atraso proporcional)
-    const pendentesPorPolo = {};
-    window.COIDatabase.os.forEach(os => {
-      if (os.status === "Concluída" || os.status === "Cancelada") return;
-      if (!aplicaFiltros(os)) return;
-      const polo = os.polo || "Não informado";
-      pendentesPorPolo[polo] = (pendentesPorPolo[polo] || 0) + 1;
-    });
-
-    // Selo de status pela TAXA DE ATRASO do polo (atrasadas ÷ pendentes):
-    // proporcional ao tamanho do polo, para diferenciar de verdade —
-    // em valores absolutos, todos os polos ficariam "Crítico".
-    // Crítico ≥ 20% · Atenção ≥ 8% · Estável < 8%.
-    const classifica = (polo, d) => {
-      const pend = pendentesPorPolo[polo] || (d.hoje + d.atraso) || 1;
-      const taxa = (d.atraso / pend) * 100;
-      if (taxa >= 20) return { classe: "critico", rotulo: "Crítico", taxa };
-      if (taxa >= 8) return { classe: "atencao", rotulo: "Atenção", taxa };
-      return { classe: "estavel", rotulo: "Estável", taxa };
-    };
-
-    const linhas = Object.entries(porPolo)
-      .map(([polo, dados]) => ({ polo, ...dados, selo: classifica(polo, dados) }))
-      .sort((a, b) => b.selo.taxa - a.selo.taxa);
-
-    if (linhas.length === 0) {
-      cardsContainer.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px;">Nenhuma OS vence hoje ou está atrasada para os filtros aplicados.</div>`;
-      if (detailPanel) detailPanel.innerHTML = "";
-      return;
-    }
-
-    // Mantém a seleção anterior se ainda existir; senão seleciona o 1º
-    if (!state.vencehojeSelectedPolo || !porPolo[state.vencehojeSelectedPolo]) {
-      state.vencehojeSelectedPolo = linhas[0].polo;
-    }
-
-    cardsContainer.innerHTML = "";
-    linhas.forEach(linha => {
-      const card = document.createElement("div");
-      card.className = "polo-card" + (linha.polo === state.vencehojeSelectedPolo ? " selected" : "");
-      card.innerHTML = `
-        <div class="polo-card-header">
-          <span class="polo-card-name">${linha.polo}</span>
-          <span class="polo-badge polo-badge-${linha.selo.classe}">${linha.selo.rotulo}</span>
-        </div>
-        <div class="polo-card-stats">Hoje <strong>${linha.hoje}</strong> · Atraso <strong>${linha.atraso}</strong></div>
-      `;
-      card.addEventListener("click", () => {
-        state.vencehojeSelectedPolo = linha.polo;
-        renderVenceHojePoloSummary();
+    if (!isPoloUser) {
+      const contagemPorPolo = {};
+      (window.COIDatabase.operacional?.os || []).forEach(os => {
+        const polo = os.polo || "Não informado";
+        if (!(polo in contagemPorPolo)) contagemPorPolo[polo] = 0;
+        if (isPrazoHoje(os)) contagemPorPolo[polo]++;
       });
-      cardsContainer.appendChild(card);
-    });
+      const polosOrdenados = Object.keys(contagemPorPolo).sort();
 
-    // Painel lateral do Polo selecionado
-    if (detailPanel) {
-      const sel = porPolo[state.vencehojeSelectedPolo];
-      const cidadeTop = Object.entries(sel.cidades).sort((a, b) => b[1] - a[1])[0];
-      const seloSel = classifica(state.vencehojeSelectedPolo, sel);
-
-      let acao;
-      if (seloSel.classe === "critico") {
-        acao = `Reforçar equipe de campo em ${cidadeTop ? cidadeTop[0] : state.vencehojeSelectedPolo} hoje — atraso acumulado (${sel.atraso} OS) já supera o volume que vence hoje. Prioridade: atacar as atrasadas mais antigas antes que o backlog cresça.`;
-      } else if (seloSel.classe === "atencao") {
-        acao = `Concentrar atendimento em ${cidadeTop ? cidadeTop[0] : state.vencehojeSelectedPolo} hoje — ${sel.hoje} OS vencem até o fim do dia${sel.atraso > 0 ? ` e ${sel.atraso} já estão em atraso` : ""}. Atuar agora evita que virem atraso amanhã.`;
-      } else {
-        acao = `Polo sob controle — ${sel.hoje} OS vencem hoje e não há atraso acumulado relevante. Manter o ritmo atual de atendimento.`;
+      if (polosOrdenados.length === 0) {
+        cardsContainer.innerHTML = `<div class="missao-empty" style="grid-column: 1/-1;">Nenhuma OS na base.</div>`;
+        return;
       }
 
-      // Mini-lista de OS: as que vencem hoje primeiro, depois as atrasadas
-      const listaOS = [
-        ...sel.osHoje.map(os => ({ os, tag: "hoje", rotulo: "vence hoje" })),
-        ...sel.osAtraso.map(os => ({ os, tag: "atraso", rotulo: "atrasada" }))
-      ].slice(0, 15);
+      // Mantém a seleção anterior se ainda existir; senão seleciona o 1º
+      if (!state.vencehojeSelectedPolo || !(state.vencehojeSelectedPolo in contagemPorPolo)) {
+        state.vencehojeSelectedPolo = polosOrdenados[0];
+      }
 
-      detailPanel.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
-          <div>
-            <div class="polo-detail-title-label">Resumo do polo</div>
-            <div class="polo-detail-title" style="margin-bottom: 0;">${state.vencehojeSelectedPolo}</div>
+      cardsContainer.innerHTML = "";
+      polosOrdenados.forEach(polo => {
+        const card = document.createElement("div");
+        card.className = "polo-card" + (polo === state.vencehojeSelectedPolo ? " selected" : "");
+        card.innerHTML = `
+          <div class="polo-card-header">
+            <span class="polo-card-name">${polo}</span>
           </div>
-          <div class="polo-detail-stats" style="margin-bottom: 0; flex: 1; max-width: 600px;">
-            <div class="polo-detail-stat">
-              <span class="polo-detail-stat-label">Vencendo hoje</span>
-              <span class="polo-detail-stat-value">${sel.hoje}</span>
-            </div>
-            <div class="polo-detail-stat">
-              <span class="polo-detail-stat-label">Atrasadas</span>
-              <span class="polo-detail-stat-value late">${sel.atraso}</span>
-            </div>
-            <div class="polo-detail-stat">
-              <span class="polo-detail-stat-label">Cidade mais crítica</span>
-              <span class="polo-detail-stat-value" style="font-size: 14px;">${cidadeTop ? `${cidadeTop[0]} (${cidadeTop[1]})` : "-"}</span>
-            </div>
-            <div class="polo-detail-stat">
-              <span class="polo-detail-stat-label">Selo</span>
-              <span class="polo-badge polo-badge-${seloSel.classe}" style="margin-top: 4px; display: inline-block;">${seloSel.rotulo}</span>
-            </div>
-          </div>
-        </div>
-        <div class="polo-detail-acao" style="margin-top: 0; border-top: 1px solid var(--border-color); padding-top: 10px;">
-          💡 <strong>Ação recomendada:</strong> ${acao}
-        </div>
-        <div class="polo-detail-section-label" style="margin-top: 14px;">OS do polo (visão rápida — clique para detalhes)</div>
-        <div class="polo-os-mini-list" id="polo-os-mini-list"></div>
-        <button type="button" class="import-btn" id="polo-ver-todas-btn" style="margin-top: 12px; width: 100%;">Ver todas as OS deste polo ›</button>
-      `;
-
-      const miniList = detailPanel.querySelector("#polo-os-mini-list");
-      if (miniList) {
-        listaOS.forEach(({ os, tag, rotulo }) => {
-          const item = document.createElement("div");
-          item.className = "polo-os-mini-item";
-          item.innerHTML = `
-            <span class="polo-os-mini-num">${os.numero_os}</span>
-            <span class="polo-os-mini-serv">${getServicoName(os.id_tipo_servico)}</span>
-            <span class="polo-os-mini-tag ${tag}">${rotulo}</span>
-          `;
-          item.addEventListener("click", () => openOSDrawer(os.id_os));
-          miniList.appendChild(item);
+          <div class="polo-card-stats">${contagemPorPolo[polo]} OS para hoje</div>
+        `;
+        // UX (05/08/2026): clicar no polo já abre a lista de OS direto — antes
+        // exigia um segundo clique em "Ver todas as OS deste polo" (removido).
+        // Mesmo mecanismo que o botão fazia: seta o select oculto do polo.
+        card.addEventListener("click", () => {
+          state.vencehojeSelectedPolo = polo;
+          const poloSelect = document.getElementById("vencehoje-search-polo");
+          if (poloSelect) poloSelect.value = polo;
+          state.vencehojePage = 1;
+          renderVenceHoje();
         });
-        if (sel.osHoje.length + sel.osAtraso.length > 15) {
-          const mais = document.createElement("div");
-          mais.style.cssText = "text-align: center; padding: 8px; font-size: 11px; color: var(--text-muted);";
-          mais.textContent = `+ ${sel.osHoje.length + sel.osAtraso.length - 15} outras — use "Ver todas"`;
-          miniList.appendChild(mais);
-        }
-      }
-
-      detailPanel.querySelector("#polo-ver-todas-btn")?.addEventListener("click", () => {
-        const poloSelect = document.getElementById("vencehoje-search-polo");
-        if (poloSelect) poloSelect.value = state.vencehojeSelectedPolo;
-        state.vencehojePage = 1;
-        renderVenceHoje();
+        cardsContainer.appendChild(card);
       });
     }
+
+    renderPainelPolo(getPoloEmFoco());
+  }
+
+  // Painel do Polo: Cidade / Equipe / Serviço em 3 cards simultâneos —
+  // reaproveita renderInsightList (mesmo motor usado em Insights
+  // Operacionais) e getTecnicoName/getServicoName já existentes. Cada card
+  // mostra o Top 5 (mesmo padrão de corte já usado em Insights) para caber
+  // numa leitura rápida.
+  // Mesma base da Missão do Dia (calcularMissaoStats): isPrazoHoje + Polo em
+  // foco. Antes contava todo o histórico do polo, o que divergia do card
+  // "Missão do Dia" (que já é escopado a hoje) e gerava números incoerentes
+  // entre os dois — corrigido a pedido explícito do dono do sistema.
+  function renderPainelPolo(poloEmFoco) {
+    if (!window.COIDatabase) return;
+    const lista = (window.COIDatabase.operacional?.os || []).filter(os => isPrazoHoje(os) && (!poloEmFoco || os.polo === poloEmFoco));
+
+    const montaRanking = (chaveFn) => {
+      const contagem = {};
+      lista.forEach(os => {
+        const chave = chaveFn(os);
+        contagem[chave] = (contagem[chave] || 0) + 1;
+      });
+      return Object.entries(contagem)
+        .map(([nome, total]) => ({ nome, score: total }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+    };
+
+    const paineis = [
+      { containerId: "painel-polo-cidade", ranking: montaRanking(os => os.municipio || "Não informado") },
+      { containerId: "painel-polo-equipe", ranking: montaRanking(os => getTecnicoName(os.id_tecnico)) },
+      { containerId: "painel-polo-servico", ranking: montaRanking(os => getServicoName(os.id_tipo_servico)) }
+    ];
+
+    paineis.forEach(({ containerId, ranking }) => {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      if (ranking.length === 0) {
+        container.innerHTML = `<div class="missao-empty">Nenhuma OS para o Polo em foco.</div>`;
+      } else {
+        renderPainelPoloOperacional(container, ranking);
+      }
+    });
+  }
+
+  // Visual de "painel operacional" para o Painel do Polo (Cidade/Equipe/
+  // Serviço) — blocos com selo de posição e número em destaque, em vez do
+  // layout de lista/relatório do renderInsightList (que continua intocado,
+  // usado por Insights Operacionais). Mesma ordenação e mesmos dados —
+  // só muda a apresentação.
+  function renderPainelPoloOperacional(container, ranking) {
+    const medalha = ["🥇", "🥈", "🥉"];
+    container.innerHTML = ranking.map((item, idx) => `
+      <div class="missao-op-row${idx < 3 ? ` top${idx + 1}` : ""}">
+        <span class="missao-op-rank">${idx < 3 ? medalha[idx] : idx + 1}</span>
+        <span class="missao-op-name">${item.nome}</span>
+        <span class="missao-op-value">${item.score}</span>
+      </div>
+    `).join("");
   }
 
   // ==========================================
@@ -5006,11 +5932,22 @@ function _doExport(){
   // Reaproveita calculateSLADetails — mesma fonte de verdade usada no
   // Dashboard e no painel IEA da tela OS Atrasadas.
   // ==========================================
-  // Códigos por categoria (Tabela 8 do 4º Termo Aditivo) — usados só para
-  // agrupar o Tempo Médio de execução por tipo de serviço nesta tela.
-  const CODIGOS_LIGACAO = new Set([14110,14114,14115,14170,14210,14320,14410,14420,14510,14520,14610,14620,14710,14721,14810,14820,15010,15020]);
-  const CODIGOS_DESOBSTRUCAO = new Set([43000,43001,43002,43100,44291,60700,61400,61600,61800]);
-  const CODIGOS_REPOSICAO = new Set([99550,99551,99552,99553,99554,99555,99556,99557]);
+  // Códigos por categoria (Tabela 8 do 4º Termo Aditivo) — declarados no
+  // topo do arquivo (perto de CODIGOS_LIGACAO_SLA) para evitar TDZ.
+
+  // Sprint COI-17: a base IEA usa o Prazo Empresa (data_prazo_programada) do
+  // SIGIS, nunca o prazo contratual recalculado por código de serviço — o
+  // SIGIS já considera a OS "no prazo" com base nesse campo. Usado somente
+  // pelos Indicadores Contratuais (renderContratuais); calculateSLADetails
+  // permanece intocado para não afetar Dashboard/Backlog/Atrasadas/VenceHoje.
+  function concluidaNoPrazoIEA(os) {
+    const prazoRef = os.data_prazo_programada
+      ? new Date(os.data_prazo_programada)
+      : (os.data_prazo ? new Date(os.data_prazo) : null);
+    if (!prazoRef) return true;
+    if (!os.data_conclusao) return true;
+    return new Date(os.data_conclusao) <= prazoRef;
+  }
 
   function calcularTempoMedio(allOS, setCodigos, unidade) {
     const concluidasCategoria = allOS.filter(os =>
@@ -5030,7 +5967,7 @@ function _doExport(){
   }
 
   function renderContratuais() {
-    if (!window.COIDatabase || !window.COIDatabase.os || window.COIDatabase.os.length === 0) {
+    if (!window.COIDatabase || !window.COIDatabase.iea?.os || window.COIDatabase.iea.os.length === 0) {
       // Sem dados: limpa os visuais e mostra mensagem
       const gauge = document.getElementById("iea-gauge");
       if (gauge) gauge.style.background = `conic-gradient(var(--bg-tertiary) 360deg)`;
@@ -5047,28 +5984,24 @@ function _doExport(){
     const eIEA = (os) => CODIGOS_IEA.has(Number(os.id_tipo_servico));
     const periodo = state.filters?.period || "month";
     const agora = state.currentSystemTime;
-    const dentroDoPeriodo = (dt) => {
-      if (!dt) return false;
-      const d = dt instanceof Date ? dt : new Date(dt);
-      if (isNaN(d.getTime())) return false;
-      if (periodo === "all") return true;
-      if (periodo === "month") return chaveMes(d) === chaveMes(agora);
-      const dias = periodo === "3d" ? 3 : periodo === "7d" ? 7 : periodo === "15d" ? 15 : null;
-      if (dias === null) return chaveMes(d) === chaveMes(agora);
-      const diff = (agora - d) / (1000 * 3600 * 24);
-      return diff >= 0 && diff <= dias;
-    };
+    // Delega ao único ponto de verdade (dataEstaNoPeriodo, definida perto de
+    // chaveMes) — antes esta tela tinha sua própria cópia da regra.
+    const dentroDoPeriodo = (dt) => dataEstaNoPeriodo(dt, periodo, agora);
 
-    const emitidasMes = window.COIDatabase.os.filter(os =>
+    // Correção (02/08/2026): QT/Baixadas devem vir SOMENTE do relatório de
+    // Baixadas/Encerradas importado (window.COIDatabase.iea.os) — nunca da
+    // união com o relatório Operacional (window.COIDatabase.os), senão uma
+    // importação operacional posterior "vaza" para dentro do indicador
+    // contratual. Decisão do dono do sistema: "a aba Indicadores
+    // Contratuais deve representar exclusivamente o relatório de baixadas
+    // que alimenta o IEA" — nenhuma outra base entra aqui.
+    const baseIEA = window.COIDatabase.iea?.os || [];
+    const emitidasMes = baseIEA.filter(os =>
       dentroDoPeriodo(os.data_abertura) && eIEA(os) && !situacaoNaoContaIEA(os)
     );
-    const baixadasMes = window.COIDatabase.os.filter(os =>
+    const baixadasMes = baseIEA.filter(os =>
       os.status === "Concluída" &&
       dentroDoPeriodo(os.data_conclusao) &&
-      eIEA(os) && !situacaoNaoContaIEA(os)
-    );
-    const pendentesAtuais = window.COIDatabase.os.filter(os =>
-      os.status !== "Concluída" && os.status !== "Cancelada" &&
       eIEA(os) && !situacaoNaoContaIEA(os)
     );
 
@@ -5076,22 +6009,26 @@ function _doExport(){
     const qt = emitidasMes.length;
     const baixadas = baixadasMes.length;
 
+    // Sprint COI-17: identifica OS da base IEA por pertencimento a
+    // window.COIDatabase.iea (não por texto de "Situacao Os").
+    const idsIEA = new Set((window.COIDatabase.iea?.os || []).map(o => o.id_os));
+
     let qa = 0;
     baixadasMes.forEach(os => {
-      const { concluidaNoPrazo, semSlaFormal } = calculateSLADetails(os);
+      const ehIEA = idsIEA.has(os.id_os);
+      const { concluidaNoPrazo, semSlaFormal } = ehIEA
+        ? { concluidaNoPrazo: concluidaNoPrazoIEA(os), semSlaFormal: false }
+        : calculateSLADetails(os);
       if (concluidaNoPrazo || semSlaFormal) qa++;
     });
 
-    let pendVencidas = 0, pendNoPrazo = 0;
-    pendentesAtuais.forEach(os => {
-      if (isAtrasadaReal(os)) pendVencidas++;
-      else pendNoPrazo++;
-    });
-
     const foraDoPrazo = baixadas - qa;
-    const pendTotal = pendVencidas + pendNoPrazo;
     const ratio = baixadas > 0 ? qa / baixadas : 0;
     const iea = ratio >= X ? 1 : ratio;
+    // Apresentação (04/08/2026): o card usa o mesmo valor exibido no gauge
+    // (razão QA/Baixadas, sem aplicar o teto de 100% da fórmula oficial) —
+    // não altera `iea` (usado pelo cálculo oficial em outros pontos).
+    const pctExibido = Math.min(100, ratio * 100);
     // Mantém `allOS` só pra compatibilidade com os cálculos de Tempo Médio
     // e o gauge de IEA logo abaixo — usa a amostra do mês.
     const allOS = baixadasMes;
@@ -5102,10 +6039,15 @@ function _doExport(){
     setText("sigis-baixadas", baixadas.toLocaleString("pt-BR"));
     setText("sigis-qa", qa.toLocaleString("pt-BR"));
     setText("sigis-fora-prazo", foraDoPrazo.toLocaleString("pt-BR"));
-    setText("sigis-iea", (iea * 100).toFixed(2).replace(".", ",") + "%");
-    setText("sigis-pend-total", pendTotal.toLocaleString("pt-BR"));
-    setText("sigis-pend-noprazo", pendNoPrazo.toLocaleString("pt-BR"));
-    setText("sigis-pend-vencidas", pendVencidas.toLocaleString("pt-BR"));
+    setText("sigis-iea", pctExibido.toFixed(1).replace(".", ",") + "%");
+
+    // Item 2 (Sprint 01): mês de referência exibido no topo (MM/AAAA)
+    const refDt = agora instanceof Date ? agora : new Date(agora);
+    if (!isNaN(refDt.getTime())) {
+      const mmYyyy = `${String(refDt.getMonth() + 1).padStart(2, "0")}/${refDt.getFullYear()}`;
+      setText("contratuais-referencia", `Referência: ${mmYyyy}`);
+    }
+
     try {
       setText("sigis-tempo-desob", calcularTempoMedio(allOS, CODIGOS_DESOBSTRUCAO, "DIAS"));
       setText("sigis-tempo-ligacao", calcularTempoMedio(allOS, CODIGOS_LIGACAO, "DIAS"));
@@ -5134,10 +6076,6 @@ function _doExport(){
             <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="20" font-weight="800"
               fill="${cor}" font-family="Segoe UI,system-ui,sans-serif">
               ${pct.toFixed(1).replace(".", ",")}%
-            </text>
-            <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-size="10"
-              fill="#64748b" font-family="Segoe UI,system-ui,sans-serif">
-              de 95% (meta)
             </text>
           </svg>`;
       }
@@ -5179,36 +6117,11 @@ function _doExport(){
     } catch (err) {
       console.error("Falha ao renderizar 'Situações das OS':", err);
     }
-
-    // ── Barra Pendentes via innerHTML (funciona sem display:visible) ──
-    try {
-      const pendentesBar = document.getElementById("pendentes-bar-wrap");
-      if (pendentesBar) {
-        void pendentesBar.offsetHeight; // força reflow antes de redesenhar
-        const pctLate = pendTotal > 0 ? (pendVencidas / pendTotal) * 100 : 0;
-        const pctOk = 100 - pctLate;
-        pendentesBar.innerHTML = `
-          <div style="height:14px;border-radius:7px;overflow:hidden;display:flex;margin-bottom:8px">
-            <div style="width:${pctOk}%;background:#8dc63f;transition:width .5s"></div>
-            <div style="width:${pctLate}%;background:#dc2626;transition:width .5s"></div>
-          </div>
-          <div style="display:flex;gap:16px;font-size:12px">
-            <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#8dc63f;margin-right:4px"></span>
-              Dentro do prazo: <strong id="pendentes-legend-ok">${pendNoPrazo.toLocaleString("pt-BR")} (${pctOk.toFixed(1)}%)</strong>
-            </span>
-            <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dc2626;margin-right:4px"></span>
-              Vencidas: <strong id="pendentes-legend-late">${pendVencidas.toLocaleString("pt-BR")} (${pctLate.toFixed(1)}%)</strong>
-            </span>
-          </div>`;
-      }
-    } catch (err) {
-      console.error("Falha ao renderizar barra de Pendentes:", err);
-    }
   }
 
   // Gaveta lateral de Detalhe da OS (FE-005 / RF-005)
   function openOSDrawer(idOS) {
-    const os = window.COIDatabase?.os.find(o => o.id_os === idOS);
+    const os = (window.COIDatabase?.operacional?.os || []).find(o => o.id_os === idOS);
     if (!os) return;
     
     state.selectedOSId = idOS;
@@ -5480,6 +6393,7 @@ function _doExport(){
 (function () {
   const DATA_URL = "./dados.json";
   const USERS_URL = "./usuarios.json";
+  const STORAGE_KEY = "coi_db";
 
   // Login/senha padrão usados SÓ enquanto não existir um usuarios.json publicado no GitHub.
   // Troque assim que possível: faça login com esse usuário, cadastre o seu de verdade em
@@ -5504,6 +6418,52 @@ function _doExport(){
     }
   }
 
+  // Correção 2 (30/07/2026): validação de timestamp sem comparar NaN.
+  function parseTimestampValido(v) {
+    if (!v) return null;
+    const t = Date.parse(v);
+    return Number.isFinite(t) ? t : null;
+  }
+
+  // Leitura segura de localStorage["coi_db"]: JSON inválido não interrompe
+  // a inicialização, não remove a entrada, apenas registra aviso e cai no
+  // fallback remoto (ver resolverBaseInicial).
+  function lerBaseLocalSegura() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (err) {
+      console.warn("coi_db inválido em localStorage — entrada mantida, mas ignorada nesta carga; usando fallback remoto:", err);
+      return null;
+    }
+  }
+
+  // Correção 2 (30/07/2026): reconcilia a base local (localStorage["coi_db"])
+  // com a base remota (./dados.json) por prioridade de atualizadoEm.
+  // Regras: 1) só uma fonte válida -> usa essa; 2) ambas válidas com
+  // atualizadoEm ISO válido -> mais recente vence, empate vai para o
+  // remoto; 3) só uma tem timestamp válido -> essa vence; 4) nenhuma tem
+  // timestamp válido -> remoto vence; 5) fetch falhou (remoto ausente) e
+  // local válido -> local vence; 6) nenhuma fonte válida -> null (chamador
+  // inicializa estrutura vazia segura — Correção 8).
+  function resolverBaseInicial(localDb, remotoDb) {
+    const localOk = !!(localDb && typeof localDb === "object");
+    const remotoOk = !!(remotoDb && typeof remotoDb === "object");
+    if (localOk && !remotoOk) return { escolhida: localDb, origem: "local" };
+    if (!localOk && remotoOk) return { escolhida: remotoDb, origem: "remoto" };
+    if (!localOk && !remotoOk) return { escolhida: null, origem: "nenhuma" };
+
+    const tLocal = parseTimestampValido(localDb.atualizadoEm);
+    const tRemoto = parseTimestampValido(remotoDb.atualizadoEm);
+    if (tLocal !== null && tRemoto !== null) {
+      return tLocal > tRemoto ? { escolhida: localDb, origem: "local" } : { escolhida: remotoDb, origem: "remoto" };
+    }
+    if (tLocal !== null && tRemoto === null) return { escolhida: localDb, origem: "local" };
+    if (tRemoto !== null && tLocal === null) return { escolhida: remotoDb, origem: "remoto" };
+    return { escolhida: remotoDb, origem: "remoto" };
+  }
+
   function downloadJSON(filename, dataObj) {
     const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -5513,18 +6473,36 @@ function _doExport(){
     URL.revokeObjectURL(url);
   }
 
+  // Correção 3 (30/07/2026): visão filtrada por polo. Retorna sempre um
+  // objeto NOVO (nunca muta db nem seus arrays); filtra .os (agregado),
+  // .operacional.os e .iea.os — os três pontos onde OS de outros polos
+  // poderiam vazar. Não instala getters de compatibilidade na visão, para
+  // que nada recalcule .os como união não filtrada de operacional/iea.
   function applyPoloFilter(db, session) {
     if (!db) return db;
     if (!session || session.papel !== "polo") return db;
-    return { ...db, os: (db.os || []).filter(o => o.polo === session.polo) };
+    const polo = session.polo;
+    const filtrarOS = (lista) => (lista || []).filter(o => o.polo === polo);
+    const operacionalFiltrado = db.operacional ? { ...db.operacional, os: filtrarOS(db.operacional.os) } : undefined;
+    const ieaFiltrado = db.iea ? { ...db.iea, os: filtrarOS(db.iea.os) } : undefined;
+    return {
+      clientes: db.clientes,
+      tecnicos: db.tecnicos,
+      tiposServico: db.tiposServico,
+      historicoStatus: db.historicoStatus,
+      atualizadoEm: db.atualizadoEm,
+      operacional: operacionalFiltrado,
+      iea: ieaFiltrado,
+      os: [...(operacionalFiltrado?.os || []), ...(ieaFiltrado?.os || [])]
+    };
   }
 
+  // Correção 2/3 (30/07/2026): window.COIDatabaseFull é a fonte canônica e
+  // integral da sessão — nunca é atribuída a partir de window.COIDatabase
+  // aqui (a reconciliação local×remoto acontece em resolverBaseInicial,
+  // antes desta função rodar). window.COIDatabase é sempre recalculada
+  // como visão derivada, a cada chamada.
   function refreshData(session) {
-    // window.COIDatabaseFull = dados reais, sem filtro. window.COIDatabase = a "visão"
-    // (já filtrada por pólo, se for o caso) que o resto do app usa para renderizar.
-    if (!window.COIDatabaseFull && window.COIDatabase) {
-      window.COIDatabaseFull = window.COIDatabase;
-    }
     if (window.COIDatabaseFull) {
       window.COIDatabase = applyPoloFilter(window.COIDatabaseFull, session);
     }
@@ -5533,9 +6511,20 @@ function _doExport(){
     atualizarSeloDados();
   }
 
+  // Reaplica o filtro por polo sempre que a base integral mudar fora do
+  // fluxo de login (ex.: importação, reaplicação de regional).
+  window.COIRecalcularVisaoSessao = () => refreshData(sessionInfo);
+
   function atualizarSeloDados() {
     const el = document.getElementById("dados-atualizado-em");
     if (!el) return;
+    // Correção 8 (30/07/2026): aviso visível quando nenhuma base pôde ser
+    // carregada (nem local, nem remota) — usa o mecanismo visual já
+    // existente do selo, sem simular dado.
+    if (window.COIBaseIndisponivel) {
+      el.textContent = "⚠ Nenhuma base de dados pôde ser carregada — importe uma planilha.";
+      return;
+    }
     const iso = window.COIDatabaseFull?.atualizadoEm;
     if (!iso) { el.textContent = ""; return; }
     const d = new Date(iso);
@@ -5569,6 +6558,44 @@ function _doExport(){
     if (wrap) wrap.style.display = papel === "polo" ? "" : "none";
   }
 
+  // Correção (30/07/2026): regra extraída do cálculo original de
+  // podeGerenciar em renderUsersTable — preservada exatamente (admin pode
+  // tudo; gestor pode tudo, exceto sobre registro de papel "admin";
+  // qualquer outro papel, ou sessão ausente, não pode nada). Reutilizada
+  // agora também nas mutações (incluir/editar/excluir), não só na
+  // renderização.
+  function podeGerenciarUsuario(alvoPapel) {
+    if (!sessionInfo) return false;
+    if (sessionInfo.papel === "admin") return true;
+    if (sessionInfo.papel === "gestor") return alvoPapel !== "admin";
+    return false;
+  }
+
+  // Correção (30/07/2026): cópia defensiva e validada de usersList — usada
+  // no download e exposta a publish.js via window.COIAuth. Nunca retorna
+  // referências dos registros originais; não renomeia nem transforma
+  // campos; preserva só os campos já existentes no formato oficial de
+  // usuarios.json; não altera usersList/window.COIUsersList; não loga
+  // conteúdo.
+  const PAPEIS_USUARIO_RECONHECIDOS = ["admin", "gestor", "polo"];
+  function prepararListaUsuariosSegura(lista) {
+    if (!Array.isArray(lista)) return [];
+    const validos = [];
+    lista.forEach((item) => {
+      if (!item || typeof item !== "object") return;
+      if (!item.login || !item.senha) return;
+      if (!PAPEIS_USUARIO_RECONHECIDOS.includes(item.papel)) return;
+      validos.push({
+        nome: item.nome,
+        login: item.login,
+        senha: item.senha,
+        papel: item.papel,
+        polo: item.polo
+      });
+    });
+    return validos;
+  }
+
   function renderUsersTable() {
     const tbody = document.getElementById("usuarios-tabela-body");
     if (!tbody) return;
@@ -5577,7 +6604,7 @@ function _doExport(){
       return;
     }
     tbody.innerHTML = usersList.map((u, i) => {
-      const podeGerenciar = sessionInfo.papel === "admin" || (sessionInfo.papel === "gestor" && u.papel !== "admin");
+      const podeGerenciar = podeGerenciarUsuario(u.papel);
       const isSelf = normalize(u.login) === normalize(sessionInfo.login);
       const editBtn = (podeGerenciar || isSelf)
         ? `<button type="button" class="logout-btn" data-edit-idx="${i}">Editar</button>`
@@ -5596,11 +6623,26 @@ function _doExport(){
     }).join("");
     tbody.querySelectorAll("[data-del-idx]").forEach(btn => {
       btn.addEventListener("click", () => {
-        const idx = parseInt(btn.getAttribute("data-del-idx"), 10);
-        if (confirm(`Remover o acesso de "${usersList[idx].nome}"?`)) {
+        // Correção (30/07/2026): valida índice, revalida autorização no
+        // momento do clique (não confia apenas na existência visual do
+        // botão) e nega antes de confirm()/splice().
+        const idx = Number.parseInt(btn.getAttribute("data-del-idx"), 10);
+        const st = document.getElementById("usuarios-status");
+        if (!Number.isInteger(idx) || idx < 0 || idx >= usersList.length) {
+          const msg = "Operação inválida: registro não encontrado.";
+          if (st) st.textContent = msg; else alert(msg);
+          return;
+        }
+        const alvo = usersList[idx];
+        const isSelf = normalize(alvo.login) === normalize(sessionInfo?.login);
+        if (!sessionInfo || !podeGerenciarUsuario(alvo.papel) || isSelf) {
+          const msg = "Acesso negado: você não tem permissão para remover este usuário.";
+          if (st) st.textContent = msg; else alert(msg);
+          return;
+        }
+        if (confirm(`Remover o acesso de "${alvo.nome}"?`)) {
           usersList.splice(idx, 1);
           renderUsersTable();
-          const st = document.getElementById("usuarios-status");
           if (st) st.textContent = "Alterado — baixe e publique o usuarios.json para valer para todos.";
         }
       });
@@ -5657,6 +6699,20 @@ function _doExport(){
       const papel = document.getElementById("user-papel").value;
       const polo = document.getElementById("user-polo").value;
       const statusEl = document.getElementById("usuarios-status");
+
+      // Correção (30/07/2026): autorização funcional antes de qualquer
+      // push/reatribuição — não confia apenas na remoção da opção
+      // "Administrador" do select. Valida o registro atual (se for edição)
+      // e o papel solicitado no formulário; nega por padrão sem sessão.
+      const registroAtual = editingIndex !== null ? usersList[editingIndex] : null;
+      const autorizadoRegistroAtual = editingIndex === null || podeGerenciarUsuario(registroAtual ? registroAtual.papel : null);
+      const autorizadoPapelSolicitado = podeGerenciarUsuario(papel);
+      if (!sessionInfo || !autorizadoRegistroAtual || !autorizadoPapelSolicitado) {
+        const msg = "Acesso negado: você não tem permissão para esta operação.";
+        if (statusEl) statusEl.textContent = msg; else alert(msg);
+        return;
+      }
+
       if (!nome || !login) { statusEl.textContent = "Preencha nome e usuário."; return; }
       if (editingIndex === null && !senha) { statusEl.textContent = "Preencha a senha."; return; }
       if (papel === "polo" && !polo) { statusEl.textContent = "Selecione o pólo."; return; }
@@ -5683,11 +6739,27 @@ function _doExport(){
     document.getElementById("user-cancel-edit-btn")?.addEventListener("click", resetUserForm);
 
     document.getElementById("baixar-usuarios-btn")?.addEventListener("click", () => {
-      downloadJSON("usuarios.json", usersList);
+      // Correção (30/07/2026): exige admin funcionalmente (não apenas
+      // CSS), nega por padrão sem sessão, e usa cópia defensiva validada
+      // em vez de usersList direto.
+      if (!sessionInfo || sessionInfo.papel !== "admin") {
+        const st = document.getElementById("usuarios-status");
+        const msg = "Acesso negado: apenas administradores podem baixar usuarios.json.";
+        if (st) st.textContent = msg; else alert(msg);
+        return;
+      }
+      const listaSegura = prepararListaUsuariosSegura(usersList);
+      downloadJSON("usuarios.json", listaSegura);
     });
 
     document.getElementById("publicar-dados-btn")?.addEventListener("click", () => {
-      downloadJSON("dados.json", window.COIDatabase || {});
+      // Correção 6 (30/07/2026): validação funcional de admin — a ocultação
+      // por CSS admin-only permanece, mas não é mais a única barreira.
+      if (!(sessionInfo && sessionInfo.papel === "admin")) {
+        alert("Acesso negado: apenas administradores podem baixar dados.json.");
+        return;
+      }
+      downloadJSON("dados.json", window.COIDatabaseFull || {});
     });
 
     renderUsersTable();
@@ -5706,6 +6778,21 @@ function _doExport(){
     refreshData(sessionInfo);
     initUsersPage();
   }
+
+  // Correção 7 (30/07/2026): interface global mínima e explícita para
+  // publish.js validar permissão e obter a base integral, sem duplicar
+  // lógica de autenticação e sem expor token/credenciais. getUsuariosSeguro
+  // (30/07/2026) adicionada para publish.js nunca serializar
+  // window.COIUsersList diretamente — não expõe sessionInfo.
+  window.COIAuth = {
+    isAdmin: () => !!(sessionInfo && sessionInfo.papel === "admin"),
+    getBaseIntegral: () => window.COIDatabaseFull || null,
+    getUsuariosSeguro: () => prepararListaUsuariosSegura(usersList),
+    // Somente leitura — usado pela tela "Missão Operacional" (bloco de
+    // script anterior) para exibir Polo/Nome/Perfil do usuário logado, sem
+    // duplicar ou alterar a lógica de autenticação.
+    getSessionInfo: () => sessionInfo ? { nome: sessionInfo.nome, papel: sessionInfo.papel, polo: sessionInfo.polo } : null
+  };
 
   function initMobileMenu() {
     const sidebar = document.getElementById("sidebar-nav");
@@ -5726,14 +6813,47 @@ function _doExport(){
     const [loadedUsers, dadosRemotos] = await Promise.all([fetchJSON(USERS_URL), fetchJSON(DATA_URL)]);
     usersList = Array.isArray(loadedUsers) && loadedUsers.length > 0 ? loadedUsers : DEFAULT_USERS.slice();
     window.COIUsersList = usersList; // Exposto para publish.js
-    if (dadosRemotos) {
-      // Retrocompatibilidade: aceita tanto formato flat ({os,clientes,...})
-      // quanto empacotado ({gerado_em, origem, coi: {os,...}}) de versões antigas.
-      window.COIDatabaseFull = dadosRemotos && dadosRemotos.coi && Array.isArray(dadosRemotos.coi.os)
-        ? dadosRemotos.coi
-        : dadosRemotos;
+
+    // Retrocompatibilidade: aceita tanto formato flat ({os,clientes,...})
+    // quanto empacotado ({gerado_em, origem, coi: {os,...}}) de versões antigas.
+    const remotoNormalizado = dadosRemotos && dadosRemotos.coi && Array.isArray(dadosRemotos.coi.os)
+      ? dadosRemotos.coi
+      : dadosRemotos;
+
+    // Correção 2 (30/07/2026): reconciliação local × remoto, antes de
+    // qualquer refreshData()/login. window.COIDatabaseFull é sempre a base
+    // integral vencedora, nunca a visão filtrada.
+    const localDb = lerBaseLocalSegura();
+    const resolucao = resolverBaseInicial(localDb, remotoNormalizado);
+
+    if (resolucao.escolhida) {
+      window.COIDatabaseFull = resolucao.escolhida;
+      window.COIImport?.garantirEstruturaSeparada?.();
+      window.COIImport?.instalarGettersCompatibilidade?.(window.COIDatabaseFull);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(window.COIDatabaseFull));
+      } catch (err) {
+        console.warn("Não foi possível persistir a base integral resolvida em localStorage:", err);
+      }
+      window.COIBaseIndisponivel = false;
+    } else {
+      // Correção 8 (30/07/2026): estado vazio seguro — sem dado fictício,
+      // sem gravação em localStorage, apenas estrutura compatível vazia.
+      window.COIDatabaseFull = {
+        operacional: { clientes: [], tecnicos: [], tiposServico: [], os: [], historicoStatus: [] },
+        iea: { clientes: [], tecnicos: [], tiposServico: [], os: [], historicoStatus: [] },
+        atualizadoEm: null
+      };
+      window.COIImport?.instalarGettersCompatibilidade?.(window.COIDatabaseFull);
+      window.COIBaseIndisponivel = true;
+      console.warn("Nenhuma base de dados válida (local ou remota) pôde ser carregada — iniciando com estrutura vazia.");
     }
-    if (loadingEl) loadingEl.textContent = "";
+
+    if (loadingEl) {
+      loadingEl.textContent = window.COIBaseIndisponivel
+        ? "⚠ Nenhuma base de dados pôde ser carregada (local ou publicada). Faça login e importe uma planilha."
+        : "";
+    }
 
     const form = document.getElementById("login-form");
     const errorEl = document.getElementById("login-error");
