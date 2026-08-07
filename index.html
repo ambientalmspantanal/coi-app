@@ -5760,6 +5760,35 @@ function _doExport(){
   // `container`. Busca as OS selecionadas direto em window.COIDatabase (não
   // por uma lista fechada em closure), pra funcionar corretamente mesmo após
   // paginação/filtro trocar o conteúdo da tela entre a renderização e o clique.
+  // Piloto Teams (07/08/2026, P11 do COI_MASTER_PROJECT.md): notifica a
+  // Programação via webhook do Power Automate quando o Supervisor envia OS.
+  // Restrito ao login do piloto — não dispara pra outros usuários ainda.
+  // Falha de rede aqui nunca deve impedir o envio real (gerarListaProgramacao/
+  // marcarOSEnviadasProgramacao já rodaram antes desta chamada).
+  const COI_TEAMS_WEBHOOK_URL = "https://default8991054ce9874297a373f9cf0e0c47.ec.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/06/workflows/a69ad07fc9444068b5c9d6e6979277d9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=2KyUWL3Umb7mI-JVFZIGN0TvqxNDIxpoIwD4TkMFByQ";
+  const COI_TEAMS_WEBHOOK_LOGIN_PILOTO = "valdecir.dlima";
+
+  function enviarParaTeamsWebhook(osSelecionadas) {
+    try {
+      const sessao = window.COIAuth?.getSessionInfo?.();
+      if (!sessao || normalize(sessao.login || "") !== COI_TEAMS_WEBHOOK_LOGIN_PILOTO) return;
+      if (!osSelecionadas || osSelecionadas.length === 0) return;
+      const polo = osSelecionadas[0]?.polo || "-";
+      const supervisor = osSelecionadas[0]?.supervisor || sessao.nome || "-";
+      const linhas = osSelecionadas
+        .map(os => `- ${os.numero_os} (${getServicoName(os.id_tipo_servico)}) · Equipe: ${os.equipeProgramacao || "-"}`)
+        .join("\n");
+      const texto = `COI -> Programacao\nPolo: ${polo}\nSupervisor: ${supervisor}\nOS enviadas (${osSelecionadas.length}):\n${linhas}`;
+      fetch(COI_TEAMS_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: texto })
+      }).catch(err => console.warn("Notificação Teams falhou (não afeta o envio à Programação):", err));
+    } catch (err) {
+      console.warn("Notificação Teams falhou (não afeta o envio à Programação):", err);
+    }
+  }
+
   function wireSelecaoEEnvio(container, prefixo, onEnviado) {
     if (!container) return;
     const checkboxes = container.querySelectorAll(".missao-select-os");
