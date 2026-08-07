@@ -5822,6 +5822,7 @@ function _doExport(){
           });
         gerarListaProgramacao(osSelecionadas);
         marcarOSEnviadasProgramacao(idsSelecionados);
+        enviarParaTeamsWebhook(osSelecionadas);
         onEnviado();
       });
     }
