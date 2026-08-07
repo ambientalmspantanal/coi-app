@@ -2069,7 +2069,7 @@ body:not(.role-admin):not(.role-gestor) .gestor-only { display: none !important;
     <div class="sidebar-footer">
       <div class="session-badge" id="session-badge"><!-- preenchido via JS --></div>
       <div>Grupo AEGEA · Saneamento MS</div>
-      <div>V1 Concluída - Ref. 2026</div>
+      <div id="coi-version-badge"><!-- preenchido via JS --></div>
       <div id="dados-atualizado-em" style="margin-top:6px;"></div>
     </div>
   </aside>
@@ -4569,67 +4569,104 @@ document.addEventListener("DOMContentLoaded", () => {
     const proc = listaFiltrada.map(os => {
       const s = getSit(os);
       return { ...s, num: os.numero_os, mun: os.municipio||"", polo: os.polo||"", sup: os.supervisor||"",
-               serv: getServicoName(os.id_tipo_servico), cod: os.id_tipo_servico||"", st: os.status };
+               serv: getServicoName(os.id_tipo_servico), cod: os.id_tipo_servico||"", st: os.status,
+               ab: fmtDate(os.data_abertura), eq: getTecnicoName(os.id_tecnico), obs: os.observacao||"" };
     });
 
     // Pendentes = não concluídas nem canceladas
     const pendArr = proc.filter(o => !["Concluída","Cancelada"].includes(o.st));
     const noPrazo = pendArr.filter(o => o.sit === "NO PRAZO");
     const vence10 = noPrazo.filter(o => o.dias <= 10);
+    const atrasadasArr = pendArr.filter(o => o.sit === "ATRASADA");
 
-    // Por polo: janelas exclusivas de vencimento (0-2d / 3-7d / 8-30d)
+    // SLA Operacional: % de OS concluídas dentro do prazo, no período filtrado.
+    // Usa `lista` (antes do filtro de situações do modal), não `listaFiltrada` —
+    // achado do teste com base real (06/08/2026): o modal desmarca "Baixada
+    // (Encerrada)" por padrão, então listaFiltrada quase sempre vem sem
+    // concluídas e o KPI cairia sempre no neutro (100%), mascarando o dado real.
+    const concluidasArr = lista.filter(os => os.status === "Concluída");
+    const concluidasNoPrazo = concluidasArr.filter(os => calculateSLADetails(os).concluidaNoPrazo).length;
+    const slaPercent = concluidasArr.length > 0 ? Math.round(concluidasNoPrazo / concluidasArr.length * 100) : 100;
+
+    // Por polo: janelas exclusivas de vencimento (0-2d / 3-7d / 8-30d) + Risco 10 Dias
+    // (Ajuste 1: risco = NO PRAZO com vencimento em até 10 dias, ainda não atrasada).
     const porPolo = {};
     pendArr.forEach(o => {
       const p = o.polo || "N/I";
-      if (!porPolo[p]) porPolo[p] = { sup: o.sup, total: 0, at: 0, v2: 0, v7: 0, v30: 0 };
+      if (!porPolo[p]) porPolo[p] = { sup: o.sup, total: 0, at: 0, v2: 0, v7: 0, v30: 0, r10: 0 };
       porPolo[p].total++;
       if (o.sit === "ATRASADA") { porPolo[p].at++; }
       else if (o.sit === "NO PRAZO") {
         if      (o.dias <= 2)  porPolo[p].v2++;
         else if (o.dias <= 7)  porPolo[p].v7++;
         else if (o.dias <= 30) porPolo[p].v30++;
+        if (o.dias <= 10) porPolo[p].r10++;
       }
     });
     const rank  = Object.entries(porPolo).sort((a,b) => b[1].at - a[1].at);
 
-    // Tabela de ranking (coluna esquerda)
-    const rankRows = rank.map(([polo,d],i) => {
-      const tx   = d.total > 0 ? (d.at / d.total * 100).toFixed(0) : 0;
-      const cor  = tx >= 50 ? "#ef4444" : tx >= 25 ? "#f59e0b" : "#22c55e";
-      const bg   = i % 2 === 0 ? "rgba(255,255,255,.03)" : "transparent";
-      const prior = tx >= 50 ? "🔴 CRÍTICO" : tx >= 25 ? "🟡 ATENÇÃO" : "🟢 ESTÁVEL";
-      return `<tr style="background:${bg}">
-        <td style="color:#64748b;font-size:10px;font-weight:700">${i+1}º</td>
-        <td style="font-weight:700;font-size:11px">${polo}</td>
-        <td style="font-size:11px;color:#64748b">${d.sup}</td>
-        <td style="text-align:center;font-size:11px">${d.total}</td>
-        <td style="text-align:center;font-weight:800;color:#ef4444">${d.at}</td>
-        <td style="text-align:center">
-          <span style="background:${cor};color:#fff;padding:1px 8px;border-radius:999px;font-size:10px;font-weight:700">${tx}%</span>
-        </td>
-        <td style="font-size:11px;font-weight:700;color:${cor}">${prior}</td>
-      </tr>`;
+    // Drill-down Nível 1: atrasadas por Polo → Serviço (Ajuste 2: criticidade
+    // considera quantidade + idade média do atraso). Nível 2/3: detalhe por OS.
+    const porPoloServico = {};
+    const osDetalhe = {};
+    atrasadasArr.forEach(o => {
+      const p = o.polo || "N/I";
+      const s = o.serv || "Outros";
+      if (!porPoloServico[p]) porPoloServico[p] = {};
+      if (!porPoloServico[p][s]) porPoloServico[p][s] = { qtd: 0, somaDias: 0, os: [] };
+      porPoloServico[p][s].qtd++;
+      porPoloServico[p][s].somaDias += o.dias;
+      porPoloServico[p][s].os.push(o.num);
+      osDetalhe[o.num] = { num: o.num, serv: o.serv, polo: o.polo, mun: o.mun, sup: o.sup, eq: o.eq,
+                            ab: o.ab, prazo: o.prazo, dias: o.dias, st: o.st, obs: o.obs };
+    });
+    const polosOrdenados = rank.map(([polo]) => polo);
+    const drillPayload = {
+      polos: polosOrdenados.map(polo => {
+        const d = porPolo[polo];
+        const servicos = Object.entries(porPoloServico[polo] || {})
+          .map(([serv, v]) => ({ serv, qtd: v.qtd, idadeMedia: v.qtd > 0 ? Math.round(v.somaDias / v.qtd) : 0, os: v.os }))
+          .sort((a,b) => b.qtd - a.qtd);
+        return { polo, sup: d.sup, at: d.at, r10: d.r10, servicos };
+      }),
+      os: osDetalhe
+    };
+    // Dados completos por polo, para a exportação em Excel (independente das telas).
+    const rankData = rank.map(([polo,d]) => ({
+      polo, sup: d.sup, total: d.total, at: d.at,
+      tx: d.total > 0 ? Math.round(d.at / d.total * 100) : 0,
+      v2: d.v2, v7: d.v7, v30: d.v30, r10: d.r10
+    }));
+
+    // Gráfico 1 — Atrasadas por Polo (barra horizontal, ordenado desc.)
+    const maxAt = Math.max(...rank.map(([,d]) => d.at), 1);
+    const chartAtrasadasHtml = rank.map(([polo,d], i) => {
+      const tx = d.total > 0 ? (d.at / d.total * 100).toFixed(0) : 0;
+      const cor = tx >= 50 ? "#ef4444" : tx >= 25 ? "#f59e0b" : "#22c55e";
+      const pct = (d.at / maxAt * 100).toFixed(1);
+      return `<div class="bar-row" onclick="abrirDrill(${i})" title="${polo} · ${d.sup} · ${d.at} atrasadas de ${d.total} (${tx}%)">
+        <div class="bar-row-label">${polo}<span class="bar-row-sub">${d.sup}</span></div>
+        <div class="bar-row-track"><div class="bar-row-fill" style="width:${pct}%;background:${cor}"></div></div>
+        <div class="bar-row-value" style="color:${cor}">${d.at}</div>
+      </div>`;
     }).join("");
 
-    // Tabela de risco futuro (coluna direita) — janelas exclusivas
-    const riskRows = rank.map(([polo,d],i) => {
-      const tx   = d.total > 0 ? (d.at / d.total * 100).toFixed(0) : 0;
-      const cor  = tx >= 50 ? "#ef4444" : tx >= 25 ? "#f59e0b" : "#22c55e";
-      const bg   = i % 2 === 0 ? "rgba(255,255,255,.03)" : "transparent";
-      const prior = tx >= 50 ? "🔴 CRÍTICO" : tx >= 25 ? "🟡 ATENÇÃO" : "🟢 ESTÁVEL";
-      const c2   = d.v2  > 0 ? `<span style="color:#f97316;font-weight:700">${d.v2}</span>`  : `<span style="color:#334155">—</span>`;
-      const c7   = d.v7  > 0 ? `<span style="color:#f59e0b;font-weight:700">${d.v7}</span>`  : `<span style="color:#334155">—</span>`;
-      const c30  = d.v30 > 0 ? `<span style="color:#64748b">${d.v30}</span>`                  : `<span style="color:#334155">—</span>`;
-      const cat  = d.at  > 0 ? `<span style="color:#ef4444;font-weight:800">${d.at}</span>`  : `<span style="color:#334155">—</span>`;
-      return `<tr style="background:${bg}">
-        <td style="font-weight:700;font-size:11px">${polo}</td>
-        <td style="font-size:11px;color:#64748b">${d.sup}</td>
-        <td style="text-align:center">${cat}</td>
-        <td style="text-align:center">${c2}</td>
-        <td style="text-align:center">${c7}</td>
-        <td style="text-align:center">${c30}</td>
-        <td style="font-size:11px;font-weight:700;color:${cor}">${prior}</td>
-      </tr>`;
+    // Gráfico 2 — Risco Futuro por Polo (barra empilhada: 0-2 / 3-7 / 8-30 dias)
+    const maxRisco = Math.max(...rank.map(([,d]) => d.v2 + d.v7 + d.v30), 1);
+    const chartRiscoHtml = rank.map(([polo,d], i) => {
+      const total = d.v2 + d.v7 + d.v30;
+      const p2 = (d.v2 / maxRisco * 100).toFixed(1);
+      const p7 = (d.v7 / maxRisco * 100).toFixed(1);
+      const p30 = (d.v30 / maxRisco * 100).toFixed(1);
+      return `<div class="bar-row" onclick="abrirDrill(${i})" title="${polo} · ${d.sup} · 0-2d:${d.v2} · 3-7d:${d.v7} · 8-30d:${d.v30}">
+        <div class="bar-row-label">${polo}<span class="bar-row-sub">${d.sup}</span></div>
+        <div class="bar-row-track">
+          <div class="bar-row-fill" style="width:${p2}%;background:#f97316"></div>
+          <div class="bar-row-fill" style="width:${p7}%;background:#f59e0b"></div>
+          <div class="bar-row-fill" style="width:${p30}%;background:#94a3b8"></div>
+        </div>
+        <div class="bar-row-value" style="color:#94a3b8">${total}</div>
+      </div>`;
     }).join("");
 
     const badgeFiltro = filtroDesc
@@ -4654,10 +4691,10 @@ html,body{min-height:100%;font-family:'Segoe UI',system-ui,sans-serif;background
 /* BODY */
 .body{padding:16px 20px;display:flex;flex-direction:column;gap:14px}
 /* KPI STRIP */
-.kpi-strip{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .kpi{background:#1e293b;border-radius:10px;padding:16px 18px;border:1px solid #334155;position:relative;overflow:hidden}
 .kpi::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
-.kpi.k1::before{background:#3b82f6}.kpi.k4::before{background:#f97316}
+.kpi.k1::before{background:#3b82f6}.kpi.k2::before{background:#ef4444}.kpi.k3::before{background:#f97316}.kpi.k4::before{background:#22c55e}
 .kpi .lbl{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
 .kpi .val{font-size:36px;font-weight:800;margin-top:6px;line-height:1}
 .kpi .sub{font-size:10px;color:#475569;margin-top:5px}
@@ -4673,6 +4710,42 @@ html,body{min-height:100%;font-family:'Segoe UI',system-ui,sans-serif;background
 table{width:100%;border-collapse:collapse;font-size:11px}
 th{padding:8px 10px;text-align:left;font-size:10px;font-weight:700;color:#475569;background:#0f172a;border-bottom:1px solid #1e293b;white-space:nowrap;text-transform:uppercase;letter-spacing:.05em}
 td{padding:7px 10px;border-bottom:1px solid #1e293b;vertical-align:middle}
+/* GRÁFICOS DE BARRA (Dashboard Executivo 2.0) */
+.chart-legend{display:flex;gap:14px;padding:8px 16px 0;font-size:10px;color:#64748b;flex-wrap:wrap}
+.chart-legend span{display:inline-flex;align-items:center;gap:5px}
+.chart-legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+.bar-list{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.bar-row{display:grid;grid-template-columns:130px 1fr 46px;align-items:center;gap:10px;cursor:pointer;border-radius:6px;padding:4px 6px;margin:-4px -6px;transition:.12s}
+.bar-row:hover{background:rgba(141,198,63,.08)}
+.bar-row-label{font-size:11px;font-weight:700;color:#e2e8f0;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-row-sub{display:block;font-size:9px;font-weight:400;color:#64748b}
+.bar-row-track{height:16px;background:#0f172a;border-radius:4px;overflow:hidden;display:flex}
+.bar-row-fill{height:100%;transition:width .2s}
+.bar-row-value{text-align:right;font-size:13px;font-weight:800}
+/* PAINEL DE DRILL-DOWN */
+#drill-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9990;opacity:0;pointer-events:none;transition:opacity .15s}
+#drill-backdrop.open{opacity:1;pointer-events:auto}
+#drill-panel{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:92vw;background:#0f172a;border-left:1px solid #334155;z-index:9991;transform:translateX(100%);transition:transform .2s;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.4)}
+#drill-panel.open{transform:translateX(0)}
+.drill-head{padding:14px 16px;border-bottom:1px solid #334155;background:#1e293b;display:flex;align-items:flex-start;gap:10px}
+.drill-head-txt{flex:1}
+.drill-head h3{font-size:14px;color:#fff;margin-bottom:2px}
+.drill-head p{font-size:11px;color:#64748b}
+.drill-close,.drill-back{background:transparent;border:1px solid #334155;color:#94a3b8;border-radius:6px;padding:4px 9px;font-size:12px;cursor:pointer;white-space:nowrap}
+.drill-close:hover,.drill-back:hover{background:#334155;color:#fff}
+.drill-kpis{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid #1e293b}
+.drill-kpi{flex:1;background:#1e293b;border-radius:8px;padding:8px 10px;text-align:center}
+.drill-kpi .n{font-size:18px;font-weight:800}
+.drill-kpi .l{font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.04em}
+.drill-body{flex:1;overflow-y:auto;padding:10px 16px}
+.drill-item{display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #1e293b;cursor:pointer;border-radius:6px}
+.drill-item:hover{background:rgba(141,198,63,.08)}
+.drill-item .tit{flex:1;font-size:12px;font-weight:700;color:#e2e8f0}
+.drill-item .meta{font-size:10px;color:#64748b}
+.drill-item .qtd{font-size:15px;font-weight:800;min-width:32px;text-align:right}
+.os-field{padding:8px 0;border-bottom:1px solid #1e293b}
+.os-field .l{font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.os-field .v{font-size:12px;color:#e2e8f0;font-weight:600}
 /* RESPONSIVE */
 @media(max-width:900px){
   .grid-main{grid-template-columns:1fr}
@@ -4682,6 +4755,8 @@ td{padding:7px 10px;border-bottom:1px solid #1e293b;vertical-align:middle}
   .body{padding:10px}
   .kpi .val{font-size:28px}
   .topbar h1{font-size:13px}
+  #drill-panel{width:100vw;max-width:100vw}
+  .bar-row{grid-template-columns:90px 1fr 36px}
 }
 /* PRINT */
 @media print{
@@ -4690,6 +4765,7 @@ td{padding:7px 10px;border-bottom:1px solid #1e293b;vertical-align:middle}
   .body{padding:8px}
   .block,.kpi{break-inside:avoid}
   .grid-main{display:grid}
+  #drill-panel,#drill-backdrop{display:none!important}
 }
 </style></head><body>
 <div class="topbar">
@@ -4705,71 +4781,72 @@ td{padding:7px 10px;border-bottom:1px solid #1e293b;vertical-align:middle}
 </div>
 <div class="body">
 
-  <!-- KPI STRIP: 2 indicadores -->
+  <!-- KPI STRIP: 4 indicadores -->
   <div class="kpi-strip">
     <div class="kpi k1">
       <div class="lbl">Pendentes</div>
       <div class="val" style="color:#3b82f6">${pendArr.length}</div>
       <div class="sub">OS em aberto</div>
     </div>
-    <div class="kpi k4">
-      <div class="lbl">Vencem ≤ 10 dias</div>
+    <div class="kpi k2">
+      <div class="lbl">Atrasadas</div>
+      <div class="val" style="color:#ef4444">${atrasadasArr.length}</div>
+      <div class="sub">venceram e seguem em aberto</div>
+    </div>
+    <div class="kpi k3">
+      <div class="lbl">Risco 10 Dias</div>
       <div class="val" style="color:#f97316">${vence10.length}</div>
-      <div class="sub">risco de atraso iminente</div>
+      <div class="sub">vencem em até 10 dias, ainda no prazo</div>
+    </div>
+    <div class="kpi k4">
+      <div class="lbl">SLA Operacional</div>
+      <div class="val" style="color:#22c55e">${slaPercent}%</div>
+      <div class="sub">concluídas dentro do prazo</div>
     </div>
   </div>
 
-  <!-- GRID PRINCIPAL: ranking | risco futuro -->
+  <!-- GRID PRINCIPAL: Atrasadas por Polo | Risco Futuro por Polo -->
   <div class="grid-main">
 
-    <!-- Coluna esquerda: ranking -->
     <div class="col">
       <div class="block">
-        <div class="block-title">📍 Ranking Operacional por Polo</div>
-        <div class="tbl-wrap">
-          <table id="tbl-ranking">
-            <thead>
-              <tr>
-                <th>#</th><th>Polo</th><th>Supervisor</th>
-                <th style="text-align:center">Total</th>
-                <th style="text-align:center">Atrasadas</th>
-                <th style="text-align:center">Taxa</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>${rankRows}</tbody>
-          </table>
-        </div>
+        <div class="block-title">📍 Atrasadas por Polo</div>
+        <div class="bar-list">${chartAtrasadasHtml}</div>
       </div>
     </div>
 
-    <!-- Coluna direita: risco futuro -->
     <div class="col">
       <div class="block" style="flex:1">
         <div class="block-title">
-          🔮 Risco Futuro — Vencimentos por Polo
+          🔮 Risco Futuro por Polo
           <span style="color:#64748b;font-size:10px;font-weight:400">janelas exclusivas de prazo</span>
         </div>
-        <div class="tbl-wrap">
-          <table id="tbl-risco">
-            <thead>
-              <tr>
-                <th>Polo</th><th>Supervisor</th>
-                <th style="text-align:center;color:#ef4444">Atrasadas</th>
-                <th style="text-align:center;color:#f97316">0–2 dias</th>
-                <th style="text-align:center;color:#f59e0b">3–7 dias</th>
-                <th style="text-align:center;color:#94a3b8">8–30 dias</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>${riskRows}</tbody>
-          </table>
+        <div class="chart-legend">
+          <span><i style="background:#f97316"></i>0–2 dias</span>
+          <span><i style="background:#f59e0b"></i>3–7 dias</span>
+          <span><i style="background:#94a3b8"></i>8–30 dias</span>
         </div>
+        <div class="bar-list">${chartRiscoHtml}</div>
       </div>
     </div>
 
   </div>
 </div>
+
+<!-- Painel de drill-down: Polo → Serviço → OS -->
+<div id="drill-backdrop"></div>
+<div id="drill-panel">
+  <div class="drill-head">
+    <button class="drill-back" id="drill-back" style="display:none">← Voltar</button>
+    <div class="drill-head-txt" id="drill-head-txt"></div>
+    <button class="drill-close" onclick="fecharDrill()">✕</button>
+  </div>
+  <div class="drill-kpis" id="drill-kpis"></div>
+  <div class="drill-body" id="drill-body"></div>
+</div>
+
+<script>window.DRILL_DATA = ${JSON.stringify(drillPayload).replace(/</g, "\\u003c")};
+window.RANK_DATA = ${JSON.stringify(rankData).replace(/</g, "\\u003c")};<\/script>
 <script data-bi="1">
 function exportarBI(){
   if(typeof XLSX==='undefined'){
@@ -4783,12 +4860,93 @@ function exportarBI(){
 }
 function _doExport(){
   var wb=XLSX.utils.book_new();
-  var t1=document.getElementById('tbl-ranking');
-  if(t1){XLSX.utils.book_append_sheet(wb,XLSX.utils.table_to_sheet(t1,{raw:true}),'Ranking por Polo');}
-  var t2=document.getElementById('tbl-risco');
-  if(t2){XLSX.utils.book_append_sheet(wb,XLSX.utils.table_to_sheet(t2,{raw:true}),'Risco Futuro');}
+  var rows1=window.RANK_DATA.map(function(d,i){
+    return {'#':i+1,'Polo':d.polo,'Supervisor':d.sup,'Total':d.total,'Atrasadas':d.at,'Taxa':d.tx+'%'};
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows1),'Ranking por Polo');
+  var rows2=window.RANK_DATA.map(function(d){
+    return {'Polo':d.polo,'Supervisor':d.sup,'Atrasadas':d.at,'0-2 dias':d.v2,'3-7 dias':d.v7,'8-30 dias':d.v30};
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows2),'Risco Futuro');
   XLSX.writeFile(wb,'COI_PainelExecutivo_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
+<\/script>
+<script>
+(function(){
+  var DD = window.DRILL_DATA;
+  var currentPolo = null;
+  function critInfo(qtd, idade){
+    if (qtd >= 100 || idade >= 15) return {emoji:'🔴', cor:'#ef4444'};
+    if (qtd >= 30 || idade >= 7) return {emoji:'🟡', cor:'#f59e0b'};
+    return {emoji:'🟢', cor:'#22c55e'};
+  }
+  function esc(s){ return String(s).replace(/'/g, "\\\\'"); }
+  window.abrirDrill = function(i){
+    currentPolo = DD.polos[i];
+    renderNivel1();
+    document.getElementById('drill-backdrop').classList.add('open');
+    document.getElementById('drill-panel').classList.add('open');
+  };
+  window.fecharDrill = function(){
+    document.getElementById('drill-backdrop').classList.remove('open');
+    document.getElementById('drill-panel').classList.remove('open');
+  };
+  function renderNivel1(){
+    var p = currentPolo;
+    document.getElementById('drill-head-txt').innerHTML = '<h3>'+p.polo+'</h3><p>Supervisor: '+p.sup+'</p>';
+    var back = document.getElementById('drill-back');
+    back.style.display = 'none';
+    document.getElementById('drill-kpis').innerHTML =
+      '<div class="drill-kpi"><div class="n" style="color:#ef4444">'+p.at+'</div><div class="l">Atrasadas</div></div>'+
+      '<div class="drill-kpi"><div class="n" style="color:#f97316">'+p.r10+'</div><div class="l">Risco 10 Dias</div></div>';
+    var html = '';
+    p.servicos.forEach(function(s){
+      var c = critInfo(s.qtd, s.idadeMedia);
+      html += '<div class="drill-item" onclick="abrirServico(\\''+esc(s.serv)+'\\')">'+
+        '<div class="tit">'+s.serv+'<div class="meta">idade média do atraso: '+s.idadeMedia+' dias</div></div>'+
+        '<div class="qtd" style="color:'+c.cor+'">'+c.emoji+' '+s.qtd+'</div></div>';
+    });
+    document.getElementById('drill-body').innerHTML = html || '<p style="color:#64748b;font-size:12px;padding:20px 0;text-align:center">Nenhuma OS atrasada neste polo.</p>';
+  }
+  window.abrirServico = function(serv){
+    var s = currentPolo.servicos.filter(function(x){ return x.serv === serv; })[0];
+    if (!s) return;
+    document.getElementById('drill-head-txt').innerHTML = '<h3>'+serv+'</h3><p>'+currentPolo.polo+' · '+s.qtd+' OS atrasada(s)</p>';
+    var back = document.getElementById('drill-back');
+    back.style.display = '';
+    back.onclick = renderNivel1;
+    document.getElementById('drill-kpis').innerHTML = '';
+    var html = '';
+    s.os.forEach(function(num){
+      var o = DD.os[num];
+      if (!o) return;
+      html += '<div class="drill-item" onclick="abrirOS(\\''+esc(num)+'\\')">'+
+        '<div class="tit">'+o.num+'<div class="meta">'+o.mun+' · '+o.sup+' · '+o.st+'</div></div>'+
+        '<div class="qtd" style="color:#ef4444">'+o.dias+'d</div></div>';
+    });
+    document.getElementById('drill-body').innerHTML = html;
+  };
+  window.abrirOS = function(num){
+    var o = DD.os[num];
+    if (!o) return;
+    document.getElementById('drill-head-txt').innerHTML = '<h3>'+o.num+'</h3><p>'+o.serv+'</p>';
+    var back = document.getElementById('drill-back');
+    back.style.display = '';
+    back.onclick = function(){ window.abrirServico(o.serv); };
+    document.getElementById('drill-kpis').innerHTML = '';
+    var campos = [
+      ['Polo', o.polo], ['Município', o.mun], ['Supervisor', o.sup], ['Equipe', o.eq],
+      ['Data de Abertura', o.ab], ['Prazo', o.prazo], ['Dias em Atraso', o.dias+' dias'],
+      ['Status', o.st], ['Observação', o.obs || '—']
+    ];
+    var html = '';
+    campos.forEach(function(c){
+      html += '<div class="os-field"><div class="l">'+c[0]+'</div><div class="v">'+c[1]+'</div></div>';
+    });
+    document.getElementById('drill-body').innerHTML = html;
+  };
+  document.getElementById('drill-backdrop').addEventListener('click', window.fecharDrill);
+})();
 <\/script>
 </body></html>`;
 
@@ -6391,6 +6549,11 @@ function _doExport(){
 <!-- ===================== LOGIN / CONTROLE DE ACESSO POR PERFIL ===================== -->
 <script>
 (function () {
+  // Versão visível do sistema — atualizar a cada entrega aprovada
+  // (Decisão correspondente no COI_MASTER_PROJECT.md).
+  const COI_VERSION = "v2.5.0";
+  const COI_VERSION_DATA = "06/08/2026";
+
   const DATA_URL = "./dados.json";
   const USERS_URL = "./usuarios.json";
   const STORAGE_KEY = "coi_db";
@@ -6398,8 +6561,9 @@ function _doExport(){
   // Login/senha padrão usados SÓ enquanto não existir um usuarios.json publicado no GitHub.
   // Troque assim que possível: faça login com esse usuário, cadastre o seu de verdade em
   // "Gestão de Usuários", baixe o usuarios.json e publique — o padrão deixa de valer.
+  // Hash de "admin123" com salt fixo "coi-default-salt" (ver hashSenha) — não é a senha em texto puro.
   const DEFAULT_USERS = [
-    { nome: "Administrador", login: "admin", senha: "admin123", papel: "admin", polo: null }
+    { nome: "Administrador", login: "admin", salt: "coi-default-salt", senhaHash: "a2f289917626c38feed8985c8fb90ca9e957bcce53d9cae4af42fa7defd857ac", papel: "admin", polo: null }
   ];
 
   let usersList = null;
@@ -6407,6 +6571,22 @@ function _doExport(){
   let editingIndex = null;
 
   function normalize(s) { return String(s || "").trim().toLowerCase(); }
+
+  // Segurança (06/08/2026, P9 do COI_MASTER_PROJECT.md): senha nunca é
+  // gravada em texto puro em usuarios.json — só o hash (SHA-256 nativo do
+  // navegador, sem biblioteca) + salt aleatório por usuário. Client-side,
+  // sem backend — reduz exposição direta, não substitui autenticação real.
+  function gerarSalt() {
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    return Array.from(arr).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  async function hashSenha(senha, salt) {
+    const enc = new TextEncoder().encode(`${salt}:${senha}`);
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("");
+  }
 
   async function fetchJSON(url) {
     try {
@@ -6583,12 +6763,13 @@ function _doExport(){
     const validos = [];
     lista.forEach((item) => {
       if (!item || typeof item !== "object") return;
-      if (!item.login || !item.senha) return;
+      if (!item.login || !item.senhaHash || !item.salt) return;
       if (!PAPEIS_USUARIO_RECONHECIDOS.includes(item.papel)) return;
       validos.push({
         nome: item.nome,
         login: item.login,
-        senha: item.senha,
+        salt: item.salt,
+        senhaHash: item.senhaHash,
         papel: item.papel,
         polo: item.polo
       });
@@ -6692,7 +6873,7 @@ function _doExport(){
     }
     populatePoloSelect();
 
-    document.getElementById("user-add-btn")?.addEventListener("click", () => {
+    document.getElementById("user-add-btn")?.addEventListener("click", async () => {
       const nome = document.getElementById("user-nome").value.trim();
       const login = document.getElementById("user-login").value.trim();
       const senha = document.getElementById("user-senha").value.trim();
@@ -6721,14 +6902,22 @@ function _doExport(){
 
       if (editingIndex !== null) {
         const atual = usersList[editingIndex];
+        let salt = atual.salt;
+        let senhaHash = atual.senhaHash;
+        if (senha) {
+          salt = gerarSalt();
+          senhaHash = await hashSenha(senha, salt);
+        }
         usersList[editingIndex] = {
           nome, login,
-          senha: senha || atual.senha,
+          salt, senhaHash,
           papel, polo: papel === "polo" ? polo : null
         };
         statusEl.textContent = "Editado — clique em 🚀 Publicar usuários no site.";
       } else {
-        usersList.push({ nome, login, senha, papel, polo: papel === "polo" ? polo : null });
+        const salt = gerarSalt();
+        const senhaHash = await hashSenha(senha, salt);
+        usersList.push({ nome, login, salt, senhaHash, papel, polo: papel === "polo" ? polo : null });
         statusEl.textContent = "Adicionado — clique em 🚀 Publicar usuários no site.";
       }
       window.COIUsersList = usersList; // Exposto para publish.js
@@ -6809,6 +6998,8 @@ function _doExport(){
 
   document.addEventListener("DOMContentLoaded", async () => {
     initMobileMenu();
+    const versionEl = document.getElementById("coi-version-badge");
+    if (versionEl) versionEl.textContent = `COI ${COI_VERSION} · ${COI_VERSION_DATA}`;
     const loadingEl = document.getElementById("login-loading");
     const [loadedUsers, dadosRemotos] = await Promise.all([fetchJSON(USERS_URL), fetchJSON(DATA_URL)]);
     usersList = Array.isArray(loadedUsers) && loadedUsers.length > 0 ? loadedUsers : DEFAULT_USERS.slice();
@@ -6857,11 +7048,13 @@ function _doExport(){
 
     const form = document.getElementById("login-form");
     const errorEl = document.getElementById("login-error");
-    form?.addEventListener("submit", (e) => {
+    form?.addEventListener("submit", async (e) => {
       e.preventDefault();
       const login = document.getElementById("login-user").value.trim();
       const senha = document.getElementById("login-pass").value;
-      const found = usersList.find(u => normalize(u.login) === normalize(login) && u.senha === senha);
+      const candidato = usersList.find(u => normalize(u.login) === normalize(login));
+      const hashDigitado = candidato ? await hashSenha(senha, candidato.salt) : null;
+      const found = candidato && hashDigitado === candidato.senhaHash ? candidato : null;
       if (!found) { errorEl.textContent = "Usuário ou senha inválidos."; return; }
       errorEl.textContent = "";
       onLoginSuccess(found);
