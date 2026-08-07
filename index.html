@@ -5766,12 +5766,15 @@ function _doExport(){
   // Falha de rede aqui nunca deve impedir o envio real (gerarListaProgramacao/
   // marcarOSEnviadasProgramacao já rodaram antes desta chamada).
   const COI_TEAMS_WEBHOOK_URL = "https://default8991054ce9874297a373f9cf0e0c47.ec.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/06/workflows/a69ad07fc9444068b5c9d6e6979277d9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=2KyUWL3Umb7mI-JVFZIGN0TvqxNDIxpoIwD4TkMFByQ";
-  const COI_TEAMS_WEBHOOK_LOGIN_PILOTO = "valdecir.dlima";
+  // COIAuth.getSessionInfo() só expõe {nome, papel, polo} (não expõe
+  // login) — usa o nome, não o login, pra não precisar mexer nessa
+  // interface compartilhada com publish.js/app.js.
+  const COI_TEAMS_WEBHOOK_NOME_PILOTO = "valdecir de lima";
 
   function enviarParaTeamsWebhook(osSelecionadas) {
     try {
       const sessao = window.COIAuth?.getSessionInfo?.();
-      if (!sessao || normalize(sessao.login || "") !== COI_TEAMS_WEBHOOK_LOGIN_PILOTO) return;
+      if (!sessao || normalize(sessao.nome || "") !== COI_TEAMS_WEBHOOK_NOME_PILOTO) return;
       if (!osSelecionadas || osSelecionadas.length === 0) return;
       const polo = osSelecionadas[0]?.polo || "-";
       const supervisor = osSelecionadas[0]?.supervisor || sessao.nome || "-";
