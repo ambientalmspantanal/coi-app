@@ -6763,16 +6763,19 @@ function _doExport(){
     const validos = [];
     lista.forEach((item) => {
       if (!item || typeof item !== "object") return;
-      if (!item.login || !item.senhaHash || !item.salt) return;
+      // Compatibilidade (07/08/2026): aceita tanto o formato novo
+      // (senhaHash+salt) quanto o formato antigo (senha em texto puro),
+      // enquanto usuarios.json publicado não for migrado. Nunca gera
+      // hash aqui (isso é feito só ao salvar via Gestão de Usuários) —
+      // só passa adiante o que já existe no registro.
+      const temHashNovo = !!(item.senhaHash && item.salt);
+      const temSenhaAntiga = !!item.senha;
+      if (!item.login || (!temHashNovo && !temSenhaAntiga)) return;
       if (!PAPEIS_USUARIO_RECONHECIDOS.includes(item.papel)) return;
-      validos.push({
-        nome: item.nome,
-        login: item.login,
-        salt: item.salt,
-        senhaHash: item.senhaHash,
-        papel: item.papel,
-        polo: item.polo
-      });
+      const seguro = { nome: item.nome, login: item.login, papel: item.papel, polo: item.polo };
+      if (temHashNovo) { seguro.salt = item.salt; seguro.senhaHash = item.senhaHash; }
+      else { seguro.senha = item.senha; }
+      validos.push(seguro);
     });
     return validos;
   }
@@ -6902,15 +6905,25 @@ function _doExport(){
 
       if (editingIndex !== null) {
         const atual = usersList[editingIndex];
-        let salt = atual.salt;
-        let senhaHash = atual.senhaHash;
+        let registroSenha;
         if (senha) {
-          salt = gerarSalt();
-          senhaHash = await hashSenha(senha, salt);
+          // Senha nova digitada: sempre grava com hash (migra o usuário
+          // pro formato seguro, mesmo que estivesse no formato antigo).
+          const salt = gerarSalt();
+          const senhaHash = await hashSenha(senha, salt);
+          registroSenha = { salt, senhaHash };
+        } else if (atual.senhaHash && atual.salt) {
+          // Sem senha nova: mantém o hash já existente.
+          registroSenha = { salt: atual.salt, senhaHash: atual.senhaHash };
+        } else {
+          // Sem senha nova e usuário ainda no formato antigo: preserva a
+          // senha em texto puro como estava — não gera hash "de senha
+          // vazia" nem apaga a credencial do usuário sem querer.
+          registroSenha = { senha: atual.senha };
         }
         usersList[editingIndex] = {
           nome, login,
-          salt, senhaHash,
+          ...registroSenha,
           papel, polo: papel === "polo" ? polo : null
         };
         statusEl.textContent = "Editado — clique em 🚀 Publicar usuários no site.";
@@ -7053,8 +7066,17 @@ function _doExport(){
       const login = document.getElementById("login-user").value.trim();
       const senha = document.getElementById("login-pass").value;
       const candidato = usersList.find(u => normalize(u.login) === normalize(login));
-      const hashDigitado = candidato ? await hashSenha(senha, candidato.salt) : null;
-      const found = candidato && hashDigitado === candidato.senhaHash ? candidato : null;
+      // Compatibilidade (07/08/2026): usuarios.json publicado pode ainda
+      // estar no formato antigo (senha em texto puro) — valida por hash
+      // quando existir salt+senhaHash, senão cai no comparativo antigo.
+      let credencialOk = false;
+      if (candidato && candidato.senhaHash && candidato.salt) {
+        const hashDigitado = await hashSenha(senha, candidato.salt);
+        credencialOk = hashDigitado === candidato.senhaHash;
+      } else if (candidato && candidato.senha) {
+        credencialOk = candidato.senha === senha;
+      }
+      const found = credencialOk ? candidato : null;
       if (!found) { errorEl.textContent = "Usuário ou senha inválidos."; return; }
       errorEl.textContent = "";
       onLoginSuccess(found);
