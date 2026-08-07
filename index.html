@@ -5774,7 +5774,8 @@ function _doExport(){
   function enviarParaTeamsWebhook(osSelecionadas) {
     try {
       const sessao = window.COIAuth?.getSessionInfo?.();
-      if (!sessao || normalize(sessao.nome || "") !== COI_TEAMS_WEBHOOK_NOME_PILOTO) return;
+      const nomeSessaoNormalizado = String(sessao?.nome || "").trim().toLowerCase();
+      if (!sessao || nomeSessaoNormalizado !== COI_TEAMS_WEBHOOK_NOME_PILOTO) return;
       if (!osSelecionadas || osSelecionadas.length === 0) return;
       const polo = osSelecionadas[0]?.polo || "-";
       const supervisor = osSelecionadas[0]?.supervisor || sessao.nome || "-";
